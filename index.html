@@ -1,311 +1,201 @@
 <!DOCTYPE html>
 <html lang="de">
 <head>
-<meta charset="UTF-8">
-<title>Externe Links</title>
+    <meta charset="UTF-8">
+    <title>Externe Links</title>
 
-<style>
-body {
-    font-family: Roboto, Arial, sans-serif;
-    background: #0f0f0f;
-    color: #ffffff;
-    padding: 30px;
-}
+    <style>
+        body {
+            font-family: Roboto, Arial, sans-serif;
+            background: #0f0f0f;
+            color: #ffffff;
+            padding: 30px;
+        }
 
-h2 {
-    font-weight: 500;
-    margin-bottom: 20px;
-}
+        h2 {
+            font-weight: 500;
+            margin-bottom: 20px;
+        }
 
-input, button {
-    padding: 10px;
-    margin: 6px 0;
-    width: 320px;
-    border-radius: 6px;
-    border: none;
-    font-size: 14px;
-}
+        input, button {
+            padding: 10px;
+            margin: 6px 0;
+            width: 320px;
+            border-radius: 6px;
+            border: none;
+            font-size: 14px;
+        }
 
-input {
-    background: #222;
-    color: #fff;
-}
+        input {
+            background: #222;
+            color: #fff;
+        }
 
-button {
-    font-weight: bold;
-    cursor: pointer;
-    margin-right: 5px;
-}
+        button {
+            font-weight: bold;
+            cursor: pointer;
+            margin-right: 5px;
+        }
 
-#addBtn {
-    background: #ff0000;
-    color: #fff;
-}
+        #addBtn {
+            background: #ff0000;
+            color: #fff;
+        }
 
-#addBtn:hover {
-    background: #cc0000;
-}
+        #addBtn:hover {
+            background: #cc0000;
+        }
 
-.linkBtn {
-    background: #333;
-    color: #fff;
-    font-size: 12px;
-    padding: 4px 8px;
-    border-radius: 4px;
-}
+        .linkBtn {
+            background: #333;
+            color: #fff;
+            font-size: 12px;
+            padding: 4px 8px;
+            border-radius: 4px;
+        }
 
-.linkBtn:hover {
-    background: #555;
-}
+        .linkBtn:hover {
+            background: #555;
+        }
 
-a {
-    color: #3ea6ff;
-    text-decoration: none;
-    margin-top: 8px;
-    display: inline-block;
-}
+        a {
+            color: #3ea6ff;
+            text-decoration: none;
+            margin-top: 8px;
+            display: inline-block;
+        }
 
-.linkContainer {
-    margin-bottom: 8px;
-}
-
-/* Overlay Styles */
-#overlay {
-    display: none;
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    background: rgba(0, 0, 0, 0.8);
-    justify-content: center;
-    align-items: center;
-}
-
-#restoreModal {
-    background: #222;
-    padding: 20px;
-    border-radius: 8px;
-    width: 400px;
-    max-height: 80%;
-    overflow-y: auto;
-}
-
-#restoreList {
-    margin-bottom: 10px;
-}
-
-.restoreItem {
-    margin-bottom: 8px;
-}
-
-#closeModal {
-    background: #ff0000;
-    color: #fff;
-    padding: 5px 10px;
-    border: none;
-    border-radius: 4px;
-    cursor: pointer;
-    float: right;
-}
-
-#restoreSelectedBtn, #restoreAllBtn {
-    background: #00cc00;
-    color: #fff;
-    padding: 10px;
-    border: none;
-    border-radius: 4px;
-    cursor: pointer;
-    margin-right: 10px;
-}
-
-#restoreSelectedBtn:hover, #restoreAllBtn:hover {
-    background: #009900;
-}
-</style>
+        .linkContainer {
+            margin-bottom: 8px;
+        }
+    </style>
 </head>
 <body>
 
-<h2>🔗 Externe Links</h2>
+    <h2>🔗 Externe Links</h2>
 
-<input id="title" placeholder="Linktitel eingeben">
-<br>
-<input id="url" type="url" placeholder="https://example.com">
-<br>
-<button id="addBtn">+ Link hinzufügen</button>
-<button id="restoreBtn" class="linkBtn">🔄 Aus LocalStorage laden</button>
-<button id="undoBtn" class="linkBtn">↩️ Gelöschte anzeigen</button>
+    <input id="title" placeholder="Linktitel eingeben">
+    <br>
+    <input id="url" type="url" placeholder="https://example.com">
+    <br>
+    <button id="addBtn">+ Link hinzufügen</button>
+    <button id="restoreBtn" class="linkBtn">🔄 Aus LocalStorage laden</button>
+    <button id="undoBtn" class="linkBtn">↩️ Rückgängig</button>
 
-<hr>
-<div id="links"></div>
+    <hr>
+    <div id="links"></div>
 
-<!-- Overlay für Restore-Interface -->
-<div id="overlay">
-    <div id="restoreModal">
-        <h3>Gelöschte Links wiederherstellen</h3>
-        <button id="closeModal">❌ Schließen</button>
-        <div id="restoreList"></div>
-        <button id="restoreSelectedBtn">Ausgewählte wiederherstellen</button>
-        <button id="restoreAllBtn">Alle wiederherstellen</button>
-    </div>
-</div>
+    <script>
+        const linksDiv = document.getElementById("links");
+        const undoStack = [];
 
-<script>
-const linksDiv = document.getElementById("links");
-const undoStack = [];
+        // Speichert Links in LocalStorage
+        function saveLinks() {
+            localStorage.setItem("links", linksDiv.innerHTML);
+        }
 
-// Speichert Links in LocalStorage
-function saveLinks() {
-    localStorage.setItem("links", linksDiv.innerHTML);
-}
-
-// Lädt Links aus LocalStorage
-function loadLinks() {
-    const saved = localStorage.getItem("links");
-    if (saved) {
-        linksDiv.innerHTML = saved;
-        // Event-Handler für alle Lösch-Buttons neu setzen
-        linksDiv.querySelectorAll(".linkBtn").forEach(btn => {
-            btn.onclick = () => {
-                const container = btn.parentElement;
-                const a = container.querySelector("a");
-                undoStack.push({
-                    title: a.textContent,
-                    url: a.href
+        // Lädt Links aus LocalStorage
+        function loadLinks() {
+            const saved = localStorage.getItem("links");
+            if (saved) {
+                linksDiv.innerHTML = saved;
+                // Event-Handler für alle Lösch-Buttons neu setzen
+                linksDiv.querySelectorAll(".linkBtn").forEach(btn => {
+                    btn.onclick = () => {
+                        const container = btn.parentElement;
+                        const a = container.querySelector("a");
+                        undoStack.push({
+                            title: a.textContent,
+                            url: a.href
+                        });
+                        container.remove();
+                        saveLinks();
+                    };
                 });
+            }
+        }
+
+        // Fügt einen neuen Link hinzu
+        function addLink() {
+            const title = document.getElementById("title").value.trim();
+            const url = document.getElementById("url").value.trim();
+            if (!title || !url) {
+                alert("Titel und URL erforderlich");
+                return;
+            }
+
+            const container = document.createElement("div");
+            container.className = "linkContainer";
+
+            const a = document.createElement("a");
+            a.href = url;
+            a.textContent = title;
+            a.target = "_blank";
+            a.rel = "noopener noreferrer";
+
+            const delBtn = document.createElement("button");
+            delBtn.textContent = "❌ Löschen";
+            delBtn.className = "linkBtn";
+            delBtn.onclick = () => {
+                undoStack.push({title, url});
                 container.remove();
                 saveLinks();
             };
-        });
-    }
-}
 
-// Fügt einen neuen Link hinzu
-function addLink() {
-    const title = document.getElementById("title").value.trim();
-    const url = document.getElementById("url").value.trim();
-    if (!title || !url) {
-        alert("Titel und URL erforderlich");
-        return;
-    }
+            container.appendChild(a);
+            container.appendChild(delBtn);
+            linksDiv.appendChild(container);
+            saveLinks();
 
-    const container = document.createElement("div");
-    container.className = "linkContainer";
+            document.getElementById("title").value = "";
+            document.getElementById("url").value = "";
+        }
 
-    const a = document.createElement("a");
-    a.href = url;
-    a.textContent = title;
-    a.target = "_blank";
-    a.rel = "noopener noreferrer";
+        // Wiederherstellen der Links aus LocalStorage
+        function restoreLinks() {
+            loadLinks();
+        }
 
-    const delBtn = document.createElement("button");
-    delBtn.textContent = "❌ Löschen";
-    delBtn.className = "linkBtn";
-    delBtn.onclick = () => {
-        undoStack.push({title, url});
-        container.remove();
-        saveLinks();
-    };
+        // Rückgängig machen (Undo) – holt den letzten gelöschten Link zurück
+        function undoDelete() {
+            if (undoStack.length === 0) {
+                alert("Keine gelöschten Links zum Wiederherstellen.");
+                return;
+            }
+            const {title, url} = undoStack.pop();
 
-    container.appendChild(a);
-    container.appendChild(delBtn);
-    linksDiv.appendChild(container);
-    saveLinks();
+            const container = document.createElement("div");
+            container.className = "linkContainer";
 
-    document.getElementById("title").value = "";
-    document.getElementById("url").value = "";
-}
+            const a = document.createElement("a");
+            a.href = url;
+            a.textContent = title;
+            a.target = "_blank";
+            a.rel = "noopener noreferrer";
 
-// Wiederherstellen der Links aus LocalStorage
-function restoreLinks() {
-    loadLinks();
-}
+            const delBtn = document.createElement("button");
+            delBtn.textContent = "❌ Löschen";
+            delBtn.className = "linkBtn";
+            delBtn.onclick = () => {
+                undoStack.push({title, url});
+                container.remove();
+                saveLinks();
+            };
 
-// Öffnet das Restore-Overlay und zeigt den Undo-Stack
-function openRestoreOverlay() {
-    if (undoStack.length === 0) {
-        alert("Keine gelöschten Links zum Wiederherstellen.");
-        return;
-    }
+            container.appendChild(a);
+            container.appendChild(delBtn);
+            linksDiv.appendChild(container);
+            saveLinks();
+        }
 
-    const restoreList = document.getElementById("restoreList");
-    restoreList.innerHTML = "";
+        // Event Listener
+        document.getElementById("addBtn").addEventListener("click", addLink);
+        document.getElementById("restoreBtn").addEventListener("click", restoreLinks);
+        document.getElementById("undoBtn").addEventListener("click", undoDelete);
 
-    undoStack.forEach((link, index) => {
-        const item = document.createElement("div");
-        item.className = "restoreItem";
-        item.innerHTML = `
-            <input type="checkbox" data-index="${index}">
-            <span>${link.title} (${link.url})</span>
-        `;
-        restoreList.appendChild(item);
-    });
-
-    document.getElementById("overlay").style.display = "flex";
-}
-
-// Schließt das Overlay
-document.getElementById("closeModal").addEventListener("click", () => {
-    document.getElementById("overlay").style.display = "none";
-});
-
-// Wiederherstellt ausgewählte Links
-document.getElementById("restoreSelectedBtn").addEventListener("click", () => {
-    const checkboxes = document.querySelectorAll("#restoreList input[type='checkbox']:checked");
-    const indicesToRestore = Array.from(checkboxes).map(cb => parseInt(cb.dataset.index)).sort((a, b) => b - a); // Absteigend sortieren, um korrekt zu splicen
-
-    indicesToRestore.forEach(index => {
-        const {title, url} = undoStack.splice(index, 1)[0];
-        restoreLink(title, url);
-    });
-
-    document.getElementById("overlay").style.display = "none";
-    saveLinks();
-});
-
-// Wiederherstellt alle Links
-document.getElementById("restoreAllBtn").addEventListener("click", () => {
-    while (undoStack.length > 0) {
-        const {title, url} = undoStack.pop();
-        restoreLink(title, url);
-    }
-    document.getElementById("overlay").style.display = "none";
-    saveLinks();
-});
-
-// Hilfsfunktion zum Wiederherstellen eines einzelnen Links
-function restoreLink(title, url) {
-    const container = document.createElement("div");
-    container.className = "linkContainer";
-
-    const a = document.createElement("a");
-    a.href = url;
-    a.textContent = title;
-    a.target = "_blank";
-    a.rel = "noopener noreferrer";
-
-    const delBtn = document.createElement("button");
-    delBtn.textContent = "❌ Löschen";
-    delBtn.className = "linkBtn";
-    delBtn.onclick = () => {
-        undoStack.push({title, url});
-        container.remove();
-        saveLinks();
-    };
-
-    container.appendChild(a);
-    container.appendChild(delBtn);
-    linksDiv.appendChild(container);
-}
-
-// Event Listener
-document.getElementById("addBtn").addEventListener("click", addLink);
-document.getElementById("restoreBtn").addEventListener("click", restoreLinks);
-document.getElementById("undoBtn").addEventListener("click", openRestoreOverlay);
-
-// Lade Links beim Start
-loadLinks();
-</script>
+        // Lade Links beim Start
+        loadLinks();
+    </script>
 
 </body>
 </html>
