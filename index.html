@@ -84,18 +84,38 @@
 
     <hr>
     <div id="links">
-        <!-- Link "Ich bin gestorben" entfernt -->
+        <!-- Alle alten Links entfernt, "Ich bin gestorben" ist nicht mehr da -->
     </div>
 
     <script>
         const linksDiv = document.getElementById("links");
         const undoStack = [];
 
+        // Entfernt automatisch alle Links mit Text "Ich bin gestorben" aus LocalStorage
+        function removeDeadLinkFromStorage() {
+            const saved = localStorage.getItem("links");
+            if (!saved) return;
+
+            const tempDiv = document.createElement("div");
+            tempDiv.innerHTML = saved;
+
+            tempDiv.querySelectorAll("a").forEach(a => {
+                if (a.textContent === "Ich bin gestorben") {
+                    a.remove();
+                }
+            });
+
+            localStorage.setItem("links", tempDiv.innerHTML);
+        }
+
         function saveLinks() {
             localStorage.setItem("links", linksDiv.innerHTML);
         }
 
         function loadLinks() {
+            // Erst sicherstellen, dass "Ich bin gestorben" entfernt ist
+            removeDeadLinkFromStorage();
+
             const saved = localStorage.getItem("links");
             if (saved) {
                 linksDiv.innerHTML = saved;
@@ -185,6 +205,7 @@
         document.getElementById("restoreBtn").addEventListener("click", restoreLinks);
         document.getElementById("undoBtn").addEventListener("click", undoDelete);
 
+        // Lade Links beim Start
         loadLinks();
     </script>
 
