@@ -83,31 +83,27 @@
     <button id="undoBtn" class="linkBtn">↩️ Rückgängig</button>
 
     <hr>
-    <div id="links"></div>
+    <div id="links">
+        <!-- Link "Ich bin gestorben" entfernt -->
+    </div>
 
     <script>
         const linksDiv = document.getElementById("links");
         const undoStack = [];
 
-        // Speichert Links in LocalStorage
         function saveLinks() {
             localStorage.setItem("links", linksDiv.innerHTML);
         }
 
-        // Lädt Links aus LocalStorage
         function loadLinks() {
             const saved = localStorage.getItem("links");
             if (saved) {
                 linksDiv.innerHTML = saved;
-                // Event-Handler für alle Lösch-Buttons neu setzen
                 linksDiv.querySelectorAll(".linkBtn").forEach(btn => {
                     btn.onclick = () => {
                         const container = btn.parentElement;
                         const a = container.querySelector("a");
-                        undoStack.push({
-                            title: a.textContent,
-                            url: a.href
-                        });
+                        undoStack.push({ title: a.textContent, url: a.href });
                         container.remove();
                         saveLinks();
                     };
@@ -115,7 +111,6 @@
             }
         }
 
-        // Fügt einen neuen Link hinzu
         function addLink() {
             const title = document.getElementById("title").value.trim();
             const url = document.getElementById("url").value.trim();
@@ -137,7 +132,7 @@
             delBtn.textContent = "❌ Löschen";
             delBtn.className = "linkBtn";
             delBtn.onclick = () => {
-                undoStack.push({title, url});
+                undoStack.push({ title, url });
                 container.remove();
                 saveLinks();
             };
@@ -151,18 +146,16 @@
             document.getElementById("url").value = "";
         }
 
-        // Wiederherstellen der Links aus LocalStorage
         function restoreLinks() {
             loadLinks();
         }
 
-        // Rückgängig machen (Undo) – holt den letzten gelöschten Link zurück
         function undoDelete() {
             if (undoStack.length === 0) {
                 alert("Keine gelöschten Links zum Wiederherstellen.");
                 return;
             }
-            const {title, url} = undoStack.pop();
+            const { title, url } = undoStack.pop();
 
             const container = document.createElement("div");
             container.className = "linkContainer";
@@ -177,7 +170,7 @@
             delBtn.textContent = "❌ Löschen";
             delBtn.className = "linkBtn";
             delBtn.onclick = () => {
-                undoStack.push({title, url});
+                undoStack.push({ title, url });
                 container.remove();
                 saveLinks();
             };
@@ -188,12 +181,10 @@
             saveLinks();
         }
 
-        // Event Listener
         document.getElementById("addBtn").addEventListener("click", addLink);
         document.getElementById("restoreBtn").addEventListener("click", restoreLinks);
         document.getElementById("undoBtn").addEventListener("click", undoDelete);
 
-        // Lade Links beim Start
         loadLinks();
     </script>
 
