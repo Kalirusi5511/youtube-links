@@ -104,12 +104,24 @@ function storageAvailable(type) {
 
 if(!storageAvailable('localStorage')){
     alert("⚠️ Achtung: localStorage ist blockiert oder im Privatmodus.\n" +
-          "Links können nicht gespeichert werden.");
+          "Neue Links können nicht gespeichert werden.");
 }
 
+// --- Fest initialisierte Links ---
+let defaultLinks = [
+  { title: "Adventskalender", url: "https://kalirusi5511.github.io/Adventskalender/" },
+  { title: "Mein Markt Plugin Projekt", url: "https://kalirusi5511.github.io/Mein-Markt-Plugin-Projekt/" },
+  { title: "WhatsApp Channel", url: "https://www.whatsapp.com/channel/0029Vb62Zu4DTkK6HVAfJZ39" },
+  { title: "Reddit Profil", url: "https://www.reddit.com/user/Ill_Excitement_2265/" },
+  { title: "Facebook Profil", url: "https://www.facebook.com/profile.php?id=61580239601449" },
+  { title: "TikTok Profil", url: "https://www.tiktok.com/@kaliminu551?lang=de-DE" }
+];
+
+// --- Links aus Storage laden oder default verwenden ---
 let linksData = storageAvailable('localStorage')
-    ? JSON.parse(localStorage.getItem("linksData") || "[]")
-    : [];
+    ? JSON.parse(localStorage.getItem("linksData") || JSON.stringify(defaultLinks))
+    : defaultLinks;
+
 let undoStack = storageAvailable('localStorage')
     ? JSON.parse(localStorage.getItem("undoStack") || "[]")
     : [];
