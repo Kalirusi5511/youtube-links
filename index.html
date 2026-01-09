@@ -84,15 +84,39 @@ const PIN_HASH = "2a4f5267815366aedacfd01a4d7510c60161d82c15797c9e48106b208b892c
 
 let role = "viewer";
 const linksDiv = document.getElementById("links");
-let undoStack = [];
-let linksData = [];
+const addBtn = document.getElementById("addBtn");
+const loginBtn = document.getElementById("loginBtn");
+const logoutBtn = document.getElementById("logoutBtn");
+const undoBtn = document.getElementById("undoBtn");
 
-// Sicherer Zugriff auf localStorage
-try { linksData = JSON.parse(localStorage.getItem("linksData") || "[]"); } catch(e){ linksData=[]; }
-try { undoStack = JSON.parse(localStorage.getItem("undoStack") || "[]"); } catch(e){ undoStack=[]; }
+// --- Storage prüfen ---
+function storageAvailable(type) {
+    try {
+        const storage = window[type];
+        const testKey = '__storage_test__';
+        storage.setItem(testKey, testKey);
+        storage.removeItem(testKey);
+        return true;
+    } catch(e) {
+        return false;
+    }
+}
 
-// Speichern aller Daten
+if(!storageAvailable('localStorage')){
+    alert("⚠️ Achtung: localStorage ist blockiert oder im Privatmodus.\n" +
+          "Links können nicht gespeichert werden.");
+}
+
+let linksData = storageAvailable('localStorage')
+    ? JSON.parse(localStorage.getItem("linksData") || "[]")
+    : [];
+let undoStack = storageAvailable('localStorage')
+    ? JSON.parse(localStorage.getItem("undoStack") || "[]")
+    : [];
+
+// Speichern nur, wenn Storage verfügbar
 function save(){
+    if(!storageAvailable('localStorage')) return;
     try{
         localStorage.setItem("linksData", JSON.stringify(linksData));
         localStorage.setItem("undoStack", JSON.stringify(undoStack));
@@ -113,7 +137,7 @@ function renderControls(){
     });
 }
 
-// Funktion zum Erstellen eines Link-Elements
+// Link-Element erstellen
 function createLinkElement(title, url){
     const d = document.createElement("div");
     d.className = "link";
@@ -139,7 +163,7 @@ function createLinkElement(title, url){
     return d;
 }
 
-// Alle Links aus linksData laden
+// Alle Links laden
 function loadLinks(){
     linksDiv.innerHTML = "";
     linksData.forEach(l=>{
@@ -190,7 +214,7 @@ addBtn.onclick = () => {
     renderControls();
 };
 
-// Rückgängig-Button
+// Rückgängig
 undoBtn.onclick = () => {
     if(!undoStack.length) return alert("Nichts zum Wiederherstellen");
     const { title, url } = undoStack.pop();
