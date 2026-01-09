@@ -84,13 +84,21 @@ const PIN_HASH = "2a4f5267815366aedacfd01a4d7510c60161d82c15797c9e48106b208b892c
 
 let role = "viewer";
 const linksDiv = document.getElementById("links");
-const undoStack = JSON.parse(localStorage.getItem("undoStack") || "[]");
-let linksData = JSON.parse(localStorage.getItem("linksData") || "[]");
+let undoStack = [];
+let linksData = [];
+
+// Sicherer Zugriff auf localStorage
+try { linksData = JSON.parse(localStorage.getItem("linksData") || "[]"); } catch(e){ linksData=[]; }
+try { undoStack = JSON.parse(localStorage.getItem("undoStack") || "[]"); } catch(e){ undoStack=[]; }
 
 // Speichern aller Daten
 function save(){
-    localStorage.setItem("linksData", JSON.stringify(linksData));
-    localStorage.setItem("undoStack", JSON.stringify(undoStack));
+    try{
+        localStorage.setItem("linksData", JSON.stringify(linksData));
+        localStorage.setItem("undoStack", JSON.stringify(undoStack));
+    } catch(e){
+        console.warn("LocalStorage blockiert oder voll", e);
+    }
 }
 
 // Kontrolle der Buttons
@@ -105,7 +113,7 @@ function renderControls(){
     });
 }
 
-// Funktion zum Erstellen eines Link-Elements mit Lösch-Button
+// Funktion zum Erstellen eines Link-Elements
 function createLinkElement(title, url){
     const d = document.createElement("div");
     d.className = "link";
@@ -121,7 +129,6 @@ function createLinkElement(title, url){
     del.className = "linkBtn del";
     del.onclick = () => {
         undoStack.push({ title, url });
-        // Link aus Array löschen
         linksData = linksData.filter(l => !(l.title === title && l.url === url));
         d.remove();
         save();
