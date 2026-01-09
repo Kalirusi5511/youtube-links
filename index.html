@@ -1,229 +1,150 @@
 <!DOCTYPE html>
 <html lang="de">
 <head>
-    <meta charset="UTF-8">
-    <title>Externe Links</title>
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta charset="UTF-8">
+<title>Externe Links</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-    <style>
-        * {
-            box-sizing: border-box;
-        }
+<style>
+*{box-sizing:border-box}
+body{
+    font-family:Arial,Roboto,sans-serif;
+    background:#0f0f0f;
+    color:#fff;
+    margin:0;
+    padding:20px;
+    display:flex;
+    justify-content:center
+}
+.app{width:100%;max-width:520px}
+h2{text-align:center;margin-bottom:14px}
 
-        body {
-            font-family: Roboto, Arial, sans-serif;
-            background: #0f0f0f;
-            color: #ffffff;
-            margin: 0;
-            padding: 20px;
-            display: flex;
-            justify-content: center;
-        }
+input,button{
+    width:100%;
+    padding:12px;
+    margin:6px 0;
+    border-radius:8px;
+    border:none;
+    font-size:15px
+}
+input{background:#222;color:#fff}
+button{font-weight:bold;cursor:pointer}
 
-        .app {
-            width: 100%;
-            max-width: 520px;
-        }
+#addBtn{background:#ff0000;color:#fff}
+#addBtn:hover{background:#cc0000}
 
-        h2 {
-            font-weight: 500;
-            margin-bottom: 16px;
-            text-align: center;
-        }
+.row{display:flex;gap:8px;flex-wrap:wrap}
 
-        input, button {
-            width: 100%;
-            padding: 12px;
-            margin: 6px 0;
-            border-radius: 8px;
-            border: none;
-            font-size: 15px;
-        }
+.linkBtn{
+    background:#333;
+    color:#fff;
+    padding:8px 10px;
+    border-radius:6px;
+    font-size:13px
+}
+.linkBtn:hover{background:#555}
 
-        input {
-            background: #222;
-            color: #fff;
-        }
+.link{
+    background:#1a1a1a;
+    padding:10px;
+    border-radius:8px;
+    margin-bottom:10px;
+    display:flex;
+    flex-direction:column;
+    gap:6px
+}
 
-        button {
-            font-weight: bold;
-            cursor: pointer;
-        }
-
-        #addBtn {
-            background: #ff0000;
-            color: #fff;
-        }
-
-        #addBtn:hover {
-            background: #cc0000;
-        }
-
-        .actionRow {
-            display: flex;
-            gap: 8px;
-            flex-wrap: wrap;
-        }
-
-        .linkBtn {
-            background: #333;
-            color: #fff;
-            font-size: 13px;
-            padding: 8px 10px;
-            border-radius: 6px;
-        }
-
-        .linkBtn:hover {
-            background: #555;
-        }
-
-        .linkContainer {
-            background: #1a1a1a;
-            padding: 10px;
-            border-radius: 8px;
-            margin-bottom: 10px;
-            display: flex;
-            flex-direction: column;
-            gap: 6px;
-        }
-
-        a {
-            color: #3ea6ff;
-            text-decoration: none;
-            word-break: break-all;
-        }
-
-        hr {
-            border: none;
-            border-top: 1px solid #333;
-            margin: 16px 0;
-        }
-    </style>
+a{color:#3ea6ff;text-decoration:none;word-break:break-all}
+hr{border:0;border-top:1px solid #333;margin:16px 0}
+.hidden{display:none}
+</style>
 </head>
 <body>
 
 <div class="app">
-    <h2>🔗 Externe Links</h2>
+<h2>🔗 Externe Links</h2>
 
-    <input id="title" placeholder="Linktitel eingeben">
-    <input id="url" type="url" placeholder="https://example.com">
+<input id="title" placeholder="Linktitel">
+<input id="url" placeholder="https://example.com">
 
-    <button id="addBtn">+ Link hinzufügen</button>
+<button id="addBtn" class="hidden">+ Link hinzufügen</button>
 
-    <div class="actionRow">
-        <button id="restoreBtn" class="linkBtn">🔄 Laden</button>
-        <button id="undoBtn" class="linkBtn">↩️ Undo</button>
-    </div>
+<div class="row">
+    <button id="loginBtn" class="linkBtn">🔐 Admin Login</button>
+    <button id="logoutBtn" class="linkBtn hidden">🔓 Logout</button>
+</div>
 
-    <hr>
-
-    <div id="links"></div>
+<hr>
+<div id="links"></div>
 </div>
 
 <script>
+/* ===== OWNER PIN ===== */
+const OWNER_PIN = "1234"; // 🔑 HIER PIN SETZEN
+
+let role = "viewer"; // viewer | owner
 const linksDiv = document.getElementById("links");
-const undoStack = [];
-const EDIT_PIN = "1234";
-let editMode = false;
 
-function saveLinks() {
-    localStorage.setItem("links", linksDiv.innerHTML);
-}
+function save(){ localStorage.setItem("links", linksDiv.innerHTML); }
 
-function removeDeadLink() {
-    const saved = localStorage.getItem("links");
-    if (!saved) return;
+function renderControls(){
+    document.getElementById("addBtn").classList.toggle("hidden", role!=="owner");
+    document.getElementById("logoutBtn").classList.toggle("hidden", role!=="owner");
+    document.getElementById("loginBtn").classList.toggle("hidden", role==="owner");
 
-    const temp = document.createElement("div");
-    temp.innerHTML = saved;
-
-    temp.querySelectorAll("a").forEach(a => {
-        if (a.textContent === "Ich bin gestorben") a.remove();
-    });
-
-    localStorage.setItem("links", temp.innerHTML);
-}
-
-function loadLinks() {
-    removeDeadLink();
-    const saved = localStorage.getItem("links");
-    if (!saved) return;
-
-    linksDiv.innerHTML = saved;
-    updateDeleteButtons();
-}
-
-function updateDeleteButtons() {
-    linksDiv.querySelectorAll(".linkBtn").forEach(btn => {
-        btn.style.display = editMode ? "inline-block" : "none";
-        btn.onclick = editMode ? () => {
-            const c = btn.parentElement;
-            const a = c.querySelector("a");
-            undoStack.push({ title: a.textContent, url: a.href });
-            c.remove();
-            saveLinks();
-        } : null;
+    linksDiv.querySelectorAll(".del").forEach(b=>{
+        b.style.display = role==="owner"?"block":"none";
     });
 }
 
-function addLink() {
-    if (!editMode) return alert("Bearbeiten gesperrt");
+function load(){
+    linksDiv.innerHTML = localStorage.getItem("links") || "";
+    renderControls();
+}
 
-    const title = document.getElementById("title").value.trim();
-    const url = document.getElementById("url").value.trim();
-    if (!title || !url) return alert("Titel und URL erforderlich");
+function addLink(){
+    if(role!=="owner") return;
 
-    const c = document.createElement("div");
-    c.className = "linkContainer";
+    const t = title.value.trim();
+    const u = url.value.trim();
+    if(!t||!u) return alert("Titel & URL fehlen");
+
+    const d = document.createElement("div");
+    d.className="link";
 
     const a = document.createElement("a");
-    a.href = url;
-    a.textContent = title;
-    a.target = "_blank";
-    a.rel = "noopener noreferrer";
+    a.href=u; a.textContent=t; a.target="_blank";
 
-    const del = document.createElement("button");
-    del.textContent = "❌ Löschen";
-    del.className = "linkBtn";
+    const del=document.createElement("button");
+    del.textContent="❌ Löschen";
+    del.className="linkBtn del";
+    del.onclick=()=>{ d.remove(); save(); };
 
-    c.appendChild(a);
-    c.appendChild(del);
-    linksDiv.appendChild(c);
+    d.append(a,del);
+    linksDiv.appendChild(d);
+    save();
 
-    saveLinks();
-    updateDeleteButtons();
-
-    document.getElementById("title").value = "";
-    document.getElementById("url").value = "";
+    title.value=""; url.value="";
+    renderControls();
 }
 
-function toggleLock() {
-    if (!editMode) {
-        const pin = prompt("PIN eingeben:");
-        if (pin !== EDIT_PIN) return alert("Falscher PIN");
-        editMode = true;
-    } else {
-        editMode = false;
-    }
+document.getElementById("loginBtn").onclick=()=>{
+    const pin=prompt("Owner PIN:");
+    if(pin===OWNER_PIN){
+        role="owner";
+        alert("Admin aktiviert");
+        renderControls();
+    }else alert("Falsche PIN");
+};
 
-    document.getElementById("lockBtn").textContent =
-        editMode ? "🔓 Bearbeiten aktiv" : "🔒 Bearbeiten sperren";
+document.getElementById("logoutBtn").onclick=()=>{
+    role="viewer";
+    renderControls();
+};
 
-    document.getElementById("addBtn").style.display = editMode ? "block" : "none";
-    document.getElementById("undoBtn").style.display = editMode ? "inline-block" : "none";
+document.getElementById("addBtn").onclick=addLink;
 
-    updateDeleteButtons();
-}
-
-document.getElementById("addBtn").onclick = addLink;
-document.getElementById("restoreBtn").onclick = loadLinks;
-document.getElementById("undoBtn").onclick = () => alert("Nur im Edit-Modus");
-document.getElementById("lockBtn").onclick = toggleLock;
-
-document.getElementById("addBtn").style.display = "none";
-document.getElementById("undoBtn").style.display = "none";
-
-loadLinks();
+load();
 </script>
 
 </body>
