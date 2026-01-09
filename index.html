@@ -72,6 +72,7 @@ hr{border:0;border-top:1px solid #333;margin:16px 0}
 <div class="row">
     <button id="loginBtn" class="linkBtn">🔐 Admin Login</button>
     <button id="logoutBtn" class="linkBtn hidden">🔓 Logout</button>
+    <button id="undoBtn" class="linkBtn hidden">↩️ Rückgängig</button>
 </div>
 
 <hr>
@@ -80,28 +81,41 @@ hr{border:0;border-top:1px solid #333;margin:16px 0}
 
 <script>
 /* ===== NUR HASH – KEIN PIN IM CODE ===== */
-const PIN_HASH =
-"2a4f5267815366aedacfd01a4d7510c60161d82c15797c9e48106b208b892ca0";
+const PIN_HASH = "2a4f5267815366aedacfd01a4d7510c60161d82c15797c9e48106b208b892ca0";
 
 let role = "viewer";
 const linksDiv = document.getElementById("links");
+const undoStack = JSON.parse(localStorage.getItem("undoStack") || "[]");
 
 function save(){
     localStorage.setItem("links", linksDiv.innerHTML);
+    localStorage.setItem("undoStack", JSON.stringify(undoStack));
 }
 
 function renderControls(){
     addBtn.classList.toggle("hidden", role!=="owner");
     logoutBtn.classList.toggle("hidden", role!=="owner");
     loginBtn.classList.toggle("hidden", role==="owner");
+    undoBtn.classList.toggle("hidden", role!=="owner" || undoStack.length === 0);
 
     linksDiv.querySelectorAll(".del").forEach(b=>{
         b.style.display = role==="owner" ? "block" : "none";
     });
 }
 
-function load(){
+function loadLinks(){
     linksDiv.innerHTML = localStorage.getItem("links") || "";
+    // Delete-Buttons mit Undo-Funktion verbinden
+    linksDiv.querySelectorAll(".del").forEach(btn=>{
+        btn.onclick = () => {
+            const parent = btn.parentElement;
+            const a = parent.querySelector("a");
+            undoStack.push({ title: a.textContent, url: a.href });
+            parent.remove();
+            save();
+            renderControls();
+        };
+    });
     renderControls();
 }
 
@@ -111,10 +125,10 @@ async function sha256(text){
     return [...new Uint8Array(buf)].map(b=>b.toString(16).padStart(2,"0")).join("");
 }
 
+// Admin Login
 loginBtn.onclick = async () => {
     const pin = prompt("Admin PIN eingeben:");
     if(!pin) return;
-
     const hash = await sha256(pin);
     if(hash === PIN_HASH){
         role = "owner";
@@ -125,11 +139,13 @@ loginBtn.onclick = async () => {
     }
 };
 
+// Admin Logout
 logoutBtn.onclick = () => {
     role = "viewer";
     renderControls();
 };
 
+// Link hinzufügen
 addBtn.onclick = () => {
     if(role!=="owner") return;
 
@@ -146,10 +162,15 @@ addBtn.onclick = () => {
     a.target="_blank";
     a.rel="noopener noreferrer";
 
-    const del=document.createElement("button");
+    const del = document.createElement("button");
     del.textContent="❌ Löschen";
     del.className="linkBtn del";
-    del.onclick=()=>{ d.remove(); save(); };
+    del.onclick = () => {
+        undoStack.push({ title: t, url: u });
+        d.remove();
+        save();
+        renderControls();
+    };
 
     d.append(a,del);
     linksDiv.appendChild(d);
@@ -159,7 +180,39 @@ addBtn.onclick = () => {
     renderControls();
 };
 
-load();
+// Rückgängig-Button
+undoBtn.onclick = () => {
+    if(!undoStack.length) return alert("Nichts zum Wiederherstellen");
+
+    const { title, url } = undoStack.pop();
+
+    const d = document.createElement("div");
+    d.className="link";
+
+    const a = document.createElement("a");
+    a.href = url;
+    a.textContent = title;
+    a.target="_blank";
+    a.rel="noopener noreferrer";
+
+    const del = document.createElement("button");
+    del.textContent="❌ Löschen";
+    del.className="linkBtn del";
+    del.onclick = () => {
+        undoStack.push({ title, url });
+        d.remove();
+        save();
+        renderControls();
+    };
+
+    d.append(a,del);
+    linksDiv.appendChild(d);
+    save();
+    renderControls();
+};
+
+// Initial
+loadLinks();
 </script>
 
 </body>
