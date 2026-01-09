@@ -7,18 +7,53 @@
 
 <style>
 *{box-sizing:border-box}
-body{font-family:Arial,Roboto,sans-serif;background:#0f0f0f;color:#fff;margin:0;padding:20px;display:flex;justify-content:center}
+body{
+    font-family:Arial,Roboto,sans-serif;
+    background:#0f0f0f;
+    color:#fff;
+    margin:0;
+    padding:20px;
+    display:flex;
+    justify-content:center
+}
 .app{width:100%;max-width:520px}
 h2{text-align:center;margin-bottom:14px}
-input,button{width:100%;padding:12px;margin:6px 0;border-radius:8px;border:none;font-size:15px}
+
+input,button{
+    width:100%;
+    padding:12px;
+    margin:6px 0;
+    border-radius:8px;
+    border:none;
+    font-size:15px
+}
 input{background:#222;color:#fff}
 button{font-weight:bold;cursor:pointer}
+
 #addBtn{background:#ff0000;color:#fff}
 #addBtn:hover{background:#cc0000}
+
 .row{display:flex;gap:8px;flex-wrap:wrap}
-.linkBtn{background:#333;color:#fff;padding:8px 10px;border-radius:6px;font-size:13px}
+
+.linkBtn{
+    background:#333;
+    color:#fff;
+    padding:8px 10px;
+    border-radius:6px;
+    font-size:13px
+}
 .linkBtn:hover{background:#555}
-.link{background:#1a1a1a;padding:10px;border-radius:8px;margin-bottom:10px;display:flex;flex-direction:column;gap:6px}
+
+.link{
+    background:#1a1a1a;
+    padding:10px;
+    border-radius:8px;
+    margin-bottom:10px;
+    display:flex;
+    flex-direction:column;
+    gap:6px
+}
+
 a{color:#3ea6ff;text-decoration:none;word-break:break-all}
 hr{border:0;border-top:1px solid #333;margin:16px 0}
 .hidden{display:none}
@@ -46,47 +81,67 @@ hr{border:0;border-top:1px solid #333;margin:16px 0}
 
 <script>
 const PIN_HASH = "2a4f5267815366aedacfd01a4d7510c60161d82c15797c9e48106b208b892ca0";
+
 let role = "viewer";
 const linksDiv = document.getElementById("links");
 const undoStack = JSON.parse(localStorage.getItem("undoStack") || "[]");
+let linksData = JSON.parse(localStorage.getItem("linksData") || "[]");
 
+// Speichern aller Daten
 function save(){
-    localStorage.setItem("links", linksDiv.innerHTML);
+    localStorage.setItem("linksData", JSON.stringify(linksData));
     localStorage.setItem("undoStack", JSON.stringify(undoStack));
 }
 
+// Kontrolle der Buttons
 function renderControls(){
     addBtn.classList.toggle("hidden", role!=="owner");
     logoutBtn.classList.toggle("hidden", role!=="owner");
     loginBtn.classList.toggle("hidden", role==="owner");
-    undoBtn.classList.toggle("hidden", role!=="owner" || undoStack.length === 0 ? true : false);
+    undoBtn.classList.toggle("hidden", role!=="owner" || undoStack.length === 0);
 
     linksDiv.querySelectorAll(".del").forEach(b=>{
         b.style.display = role==="owner" ? "block" : "none";
     });
 }
 
-// Setzt die Delete-Events korrekt
-function attachDeleteEvents(){
-    linksDiv.querySelectorAll(".del").forEach(btn=>{
-        btn.onclick = () => {
-            const parent = btn.parentElement;
-            const a = parent.querySelector("a");
-            undoStack.push({ title: a.textContent, url: a.href });
-            parent.remove();
-            save();
-            renderControls();
-        };
-    });
+// Funktion zum Erstellen eines Link-Elements mit Lösch-Button
+function createLinkElement(title, url){
+    const d = document.createElement("div");
+    d.className = "link";
+
+    const a = document.createElement("a");
+    a.href = url;
+    a.textContent = title;
+    a.target = "_blank";
+    a.rel = "noopener noreferrer";
+
+    const del = document.createElement("button");
+    del.textContent = "❌ Löschen";
+    del.className = "linkBtn del";
+    del.onclick = () => {
+        undoStack.push({ title, url });
+        // Link aus Array löschen
+        linksData = linksData.filter(l => !(l.title === title && l.url === url));
+        d.remove();
+        save();
+        renderControls();
+    };
+
+    d.append(a, del);
+    return d;
 }
 
-// Lädt Links und setzt Events
+// Alle Links aus linksData laden
 function loadLinks(){
-    linksDiv.innerHTML = localStorage.getItem("links") || "";
-    attachDeleteEvents();
+    linksDiv.innerHTML = "";
+    linksData.forEach(l=>{
+        linksDiv.appendChild(createLinkElement(l.title, l.url));
+    });
     renderControls();
 }
 
+// SHA256 Hashfunktion
 async function sha256(text){
     const enc = new TextEncoder().encode(text);
     const buf = await crypto.subtle.digest("SHA-256", enc);
@@ -116,70 +171,29 @@ logoutBtn.onclick = () => {
 // Link hinzufügen
 addBtn.onclick = () => {
     if(role!=="owner") return;
-
     const t = title.value.trim();
     const u = url.value.trim();
     if(!t||!u) return alert("Titel & URL fehlen");
 
-    const d = document.createElement("div");
-    d.className="link";
-
-    const a = document.createElement("a");
-    a.href=u;
-    a.textContent=t;
-    a.target="_blank";
-    a.rel="noopener noreferrer";
-
-    const del = document.createElement("button");
-    del.textContent="❌ Löschen";
-    del.className="linkBtn del";
-    del.onclick = () => {
-        undoStack.push({ title: t, url: u });
-        d.remove();
-        save();
-        renderControls();
-    };
-
-    d.append(a,del);
-    linksDiv.appendChild(d);
+    linksData.push({ title: t, url: u });
+    linksDiv.appendChild(createLinkElement(t, u));
     save();
-    attachDeleteEvents();
-    title.value=""; url.value="";
+
+    title.value = ""; url.value = "";
     renderControls();
 };
 
-// Rückgängig
+// Rückgängig-Button
 undoBtn.onclick = () => {
     if(!undoStack.length) return alert("Nichts zum Wiederherstellen");
-
     const { title, url } = undoStack.pop();
-
-    const d = document.createElement("div");
-    d.className="link";
-
-    const a = document.createElement("a");
-    a.href = url;
-    a.textContent = title;
-    a.target="_blank";
-    a.rel="noopener noreferrer";
-
-    const del = document.createElement("button");
-    del.textContent="❌ Löschen";
-    del.className="linkBtn del";
-    del.onclick = () => {
-        undoStack.push({ title, url });
-        d.remove();
-        save();
-        renderControls();
-    };
-
-    d.append(a,del);
-    linksDiv.appendChild(d);
+    linksData.push({ title, url });
+    linksDiv.appendChild(createLinkElement(title, url));
     save();
-    attachDeleteEvents();
     renderControls();
 };
 
+// Initial
 loadLinks();
 </script>
 
