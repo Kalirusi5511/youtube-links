@@ -3,27 +3,41 @@
 <head>
     <meta charset="UTF-8">
     <title>Externe Links</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
     <style>
+        * {
+            box-sizing: border-box;
+        }
+
         body {
             font-family: Roboto, Arial, sans-serif;
             background: #0f0f0f;
             color: #ffffff;
-            padding: 30px;
+            margin: 0;
+            padding: 20px;
+            display: flex;
+            justify-content: center;
+        }
+
+        .app {
+            width: 100%;
+            max-width: 520px;
         }
 
         h2 {
             font-weight: 500;
-            margin-bottom: 20px;
+            margin-bottom: 16px;
+            text-align: center;
         }
 
         input, button {
-            padding: 10px;
+            width: 100%;
+            padding: 12px;
             margin: 6px 0;
-            width: 320px;
-            border-radius: 6px;
+            border-radius: 8px;
             border: none;
-            font-size: 14px;
+            font-size: 15px;
         }
 
         input {
@@ -34,7 +48,6 @@
         button {
             font-weight: bold;
             cursor: pointer;
-            margin-right: 5px;
         }
 
         #addBtn {
@@ -46,176 +59,153 @@
             background: #cc0000;
         }
 
+        .actionRow {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+
         .linkBtn {
             background: #333;
             color: #fff;
-            font-size: 12px;
-            padding: 4px 8px;
-            border-radius: 4px;
+            font-size: 13px;
+            padding: 8px 10px;
+            border-radius: 6px;
         }
 
         .linkBtn:hover {
             background: #555;
         }
 
+        .linkContainer {
+            background: #1a1a1a;
+            padding: 10px;
+            border-radius: 8px;
+            margin-bottom: 10px;
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+
         a {
             color: #3ea6ff;
             text-decoration: none;
-            margin-top: 8px;
-            display: inline-block;
+            word-break: break-all;
         }
 
-        .linkContainer {
-            margin-bottom: 8px;
+        hr {
+            border: none;
+            border-top: 1px solid #333;
+            margin: 16px 0;
         }
     </style>
 </head>
 <body>
 
+<div class="app">
     <h2>🔗 Externe Links</h2>
 
     <input id="title" placeholder="Linktitel eingeben">
-    <br>
     <input id="url" type="url" placeholder="https://example.com">
-    <br>
-    <button id="addBtn">+ Link hinzufügen</button>
-    <button id="restoreBtn" class="linkBtn">🔄 Aus LocalStorage laden</button>
-    <button id="undoBtn" class="linkBtn">↩️ Rückgängig</button>
 
-    <hr>
-    <div id="links">
-        <!-- Alle alten Links entfernt, "Ich bin gestorben" ist endgültig gelöscht -->
+    <button id="addBtn">+ Link hinzufügen</button>
+
+    <div class="actionRow">
+        <button id="restoreBtn" class="linkBtn">🔄 Laden</button>
+        <button id="undoBtn" class="linkBtn">↩️ Undo</button>
     </div>
 
-    <script>
-        const linksDiv = document.getElementById("links");
-        const undoStack = [];
+    <hr>
 
-        // Entfernt automatisch den Link "Ich bin gestorben" aus LocalStorage und HTML
-        function removeDeadLink() {
-            // Aus LocalStorage entfernen
-            const saved = localStorage.getItem("links");
-            if (saved) {
-                const tempDiv = document.createElement("div");
-                tempDiv.innerHTML = saved;
+    <div id="links"></div>
+</div>
 
-                tempDiv.querySelectorAll("a").forEach(a => {
-                    if (a.textContent === "Ich bin gestorben") {
-                        a.remove();
-                    }
-                });
+<script>
+    const linksDiv = document.getElementById("links");
+    const undoStack = [];
 
-                localStorage.setItem("links", tempDiv.innerHTML);
-            }
+    function saveLinks() {
+        localStorage.setItem("links", linksDiv.innerHTML);
+    }
 
-            // Direkt aus dem aktuellen HTML entfernen
-            linksDiv.querySelectorAll("a").forEach(a => {
-                if (a.textContent === "Ich bin gestorben") {
-                    a.remove();
-                }
-            });
-        }
+    function removeDeadLink() {
+        const saved = localStorage.getItem("links");
+        if (!saved) return;
 
-        function saveLinks() {
-            localStorage.setItem("links", linksDiv.innerHTML);
-        }
+        const temp = document.createElement("div");
+        temp.innerHTML = saved;
 
-        function loadLinks() {
-            // Erst sicherstellen, dass "Ich bin gestorben" entfernt ist
-            removeDeadLink();
+        temp.querySelectorAll("a").forEach(a => {
+            if (a.textContent === "Ich bin gestorben") a.remove();
+        });
 
-            const saved = localStorage.getItem("links");
-            if (saved) {
-                linksDiv.innerHTML = saved;
-                linksDiv.querySelectorAll(".linkBtn").forEach(btn => {
-                    btn.onclick = () => {
-                        const container = btn.parentElement;
-                        const a = container.querySelector("a");
-                        undoStack.push({ title: a.textContent, url: a.href });
-                        container.remove();
-                        saveLinks();
-                    };
-                });
-            }
-        }
+        localStorage.setItem("links", temp.innerHTML);
+    }
 
-        function addLink() {
-            const title = document.getElementById("title").value.trim();
-            const url = document.getElementById("url").value.trim();
-            if (!title || !url) {
-                alert("Titel und URL erforderlich");
-                return;
-            }
+    function loadLinks() {
+        removeDeadLink();
+        const saved = localStorage.getItem("links");
+        if (!saved) return;
 
-            const container = document.createElement("div");
-            container.className = "linkContainer";
-
-            const a = document.createElement("a");
-            a.href = url;
-            a.textContent = title;
-            a.target = "_blank";
-            a.rel = "noopener noreferrer";
-
-            const delBtn = document.createElement("button");
-            delBtn.textContent = "❌ Löschen";
-            delBtn.className = "linkBtn";
-            delBtn.onclick = () => {
-                undoStack.push({ title, url });
-                container.remove();
+        linksDiv.innerHTML = saved;
+        linksDiv.querySelectorAll(".linkBtn").forEach(btn => {
+            btn.onclick = () => {
+                const c = btn.parentElement;
+                const a = c.querySelector("a");
+                undoStack.push({ title: a.textContent, url: a.href });
+                c.remove();
                 saveLinks();
             };
+        });
+    }
 
-            container.appendChild(a);
-            container.appendChild(delBtn);
-            linksDiv.appendChild(container);
+    function addLink() {
+        const title = document.getElementById("title").value.trim();
+        const url = document.getElementById("url").value.trim();
+        if (!title || !url) return alert("Titel und URL erforderlich");
+
+        const c = document.createElement("div");
+        c.className = "linkContainer";
+
+        const a = document.createElement("a");
+        a.href = url;
+        a.textContent = title;
+        a.target = "_blank";
+        a.rel = "noopener noreferrer";
+
+        const del = document.createElement("button");
+        del.textContent = "❌ Löschen";
+        del.className = "linkBtn";
+        del.onclick = () => {
+            undoStack.push({ title, url });
+            c.remove();
             saveLinks();
+        };
 
-            document.getElementById("title").value = "";
-            document.getElementById("url").value = "";
-        }
+        c.appendChild(a);
+        c.appendChild(del);
+        linksDiv.appendChild(c);
+        saveLinks();
 
-        function restoreLinks() {
-            loadLinks();
-        }
+        document.getElementById("title").value = "";
+        document.getElementById("url").value = "";
+    }
 
-        function undoDelete() {
-            if (undoStack.length === 0) {
-                alert("Keine gelöschten Links zum Wiederherstellen.");
-                return;
-            }
-            const { title, url } = undoStack.pop();
+    function undoDelete() {
+        if (!undoStack.length) return alert("Nichts zum Wiederherstellen");
 
-            const container = document.createElement("div");
-            container.className = "linkContainer";
+        const { title, url } = undoStack.pop();
+        document.getElementById("title").value = title;
+        document.getElementById("url").value = url;
+        addLink();
+    }
 
-            const a = document.createElement("a");
-            a.href = url;
-            a.textContent = title;
-            a.target = "_blank";
-            a.rel = "noopener noreferrer";
+    document.getElementById("addBtn").onclick = addLink;
+    document.getElementById("restoreBtn").onclick = loadLinks;
+    document.getElementById("undoBtn").onclick = undoDelete;
 
-            const delBtn = document.createElement("button");
-            delBtn.textContent = "❌ Löschen";
-            delBtn.className = "linkBtn";
-            delBtn.onclick = () => {
-                undoStack.push({ title, url });
-                container.remove();
-                saveLinks();
-            };
-
-            container.appendChild(a);
-            container.appendChild(delBtn);
-            linksDiv.appendChild(container);
-            saveLinks();
-        }
-
-        document.getElementById("addBtn").addEventListener("click", addLink);
-        document.getElementById("restoreBtn").addEventListener("click", restoreLinks);
-        document.getElementById("undoBtn").addEventListener("click", undoDelete);
-
-        // Lade Links beim Start
-        loadLinks();
-    </script>
+    loadLinks();
+</script>
 
 </body>
 </html>
