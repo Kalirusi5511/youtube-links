@@ -79,21 +79,24 @@ hr{border:0;border-top:1px solid #333;margin:16px 0}
 </div>
 
 <script>
-/* ===== OWNER PIN ===== */
-const OWNER_PIN = "1234"; // 🔑 HIER PIN SETZEN
+/* ===== NUR HASH – KEIN PIN IM CODE ===== */
+const PIN_HASH =
+"03ac674216f3e15c761ee1a5e255f067953623c8b388b4459e13f978d7c846f4";
 
-let role = "viewer"; // viewer | owner
+let role = "viewer";
 const linksDiv = document.getElementById("links");
 
-function save(){ localStorage.setItem("links", linksDiv.innerHTML); }
+function save(){
+    localStorage.setItem("links", linksDiv.innerHTML);
+}
 
 function renderControls(){
-    document.getElementById("addBtn").classList.toggle("hidden", role!=="owner");
-    document.getElementById("logoutBtn").classList.toggle("hidden", role!=="owner");
-    document.getElementById("loginBtn").classList.toggle("hidden", role==="owner");
+    addBtn.classList.toggle("hidden", role!=="owner");
+    logoutBtn.classList.toggle("hidden", role!=="owner");
+    loginBtn.classList.toggle("hidden", role==="owner");
 
     linksDiv.querySelectorAll(".del").forEach(b=>{
-        b.style.display = role==="owner"?"block":"none";
+        b.style.display = role==="owner" ? "block" : "none";
     });
 }
 
@@ -102,7 +105,32 @@ function load(){
     renderControls();
 }
 
-function addLink(){
+async function sha256(text){
+    const enc = new TextEncoder().encode(text);
+    const buf = await crypto.subtle.digest("SHA-256", enc);
+    return [...new Uint8Array(buf)].map(b=>b.toString(16).padStart(2,"0")).join("");
+}
+
+loginBtn.onclick = async () => {
+    const pin = prompt("Admin PIN eingeben:");
+    if(!pin) return;
+
+    const hash = await sha256(pin);
+    if(hash === PIN_HASH){
+        role = "owner";
+        alert("Admin-Modus aktiviert");
+        renderControls();
+    } else {
+        alert("Falscher PIN");
+    }
+};
+
+logoutBtn.onclick = () => {
+    role = "viewer";
+    renderControls();
+};
+
+addBtn.onclick = () => {
     if(role!=="owner") return;
 
     const t = title.value.trim();
@@ -113,7 +141,10 @@ function addLink(){
     d.className="link";
 
     const a = document.createElement("a");
-    a.href=u; a.textContent=t; a.target="_blank";
+    a.href=u;
+    a.textContent=t;
+    a.target="_blank";
+    a.rel="noopener noreferrer";
 
     const del=document.createElement("button");
     del.textContent="❌ Löschen";
@@ -126,23 +157,7 @@ function addLink(){
 
     title.value=""; url.value="";
     renderControls();
-}
-
-document.getElementById("loginBtn").onclick=()=>{
-    const pin=prompt("Owner PIN:");
-    if(pin===OWNER_PIN){
-        role="owner";
-        alert("Admin aktiviert");
-        renderControls();
-    }else alert("Falsche PIN");
 };
-
-document.getElementById("logoutBtn").onclick=()=>{
-    role="viewer";
-    renderControls();
-};
-
-document.getElementById("addBtn").onclick=addLink;
 
 load();
 </script>
