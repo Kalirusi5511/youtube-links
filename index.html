@@ -1,0 +1,251 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<title>Externe Links</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<style>
+*{box-sizing:border-box}
+body{
+    font-family:Arial,Roboto,sans-serif;
+    background:#0f0f0f;
+    color:#fff;
+    margin:0;
+    padding:20px;
+    display:flex;
+    justify-content:center
+}
+.app{width:100%;max-width:520px}
+h2{text-align:center;margin-bottom:14px}
+
+input,button{
+    width:100%;
+    padding:12px;
+    margin:6px 0;
+    border-radius:8px;
+    border:none;
+    font-size:15px
+}
+input{background:#222;color:#fff}
+button{font-weight:bold;cursor:pointer}
+
+#addBtn{background:#ff0000;color:#fff}
+#addBtn:hover{background:#cc0000}
+
+.row{display:flex;gap:8px;flex-wrap:wrap}
+
+.linkBtn{
+    background:#333;
+    color:#fff;
+    padding:8px 10px;
+    border-radius:6px;
+    font-size:13px
+}
+.linkBtn:hover{background:#555}
+
+.link{
+    background:#1a1a1a;
+    padding:10px;
+    border-radius:8px;
+    margin-bottom:10px;
+    display:flex;
+    flex-direction:column;
+    gap:6px
+}
+
+a{color:#3ea6ff;text-decoration:none;word-break:break-all}
+hr{border:0;border-top:1px solid #333;margin:16px 0}
+.hidden{display:none}
+</style>
+</head>
+<body>
+
+<div class="app">
+<h2>🔗 Externe Links</h2>
+
+<input id="title" placeholder="Linktitel">
+<input id="url" placeholder="https://example.com">
+
+<button id="addBtn" class="hidden">+ Link hinzufügen</button>
+
+<div class="row">
+    <button id="loginBtn" class="linkBtn">🔐 Admin Login</button>
+    <button id="logoutBtn" class="linkBtn hidden">🔓 Logout</button>
+    <button id="undoBtn" class="linkBtn hidden">↩️ Rückgängig</button>
+</div>
+
+<hr>
+<div id="links"></div>
+</div>
+
+<script>
+// === ADMIN PASSWORD HASH (PIN 9876) ===
+const ADMIN_PIN_HASH = "dbff5341acad5e2a58db4efd5e72e2d9a0a843a28e02b1183c68162d0a3a3de6";
+
+let role = "viewer";
+
+const linksDiv = document.getElementById("links");
+const addBtn = document.getElementById("addBtn");
+const loginBtn = document.getElementById("loginBtn");
+const logoutBtn = document.getElementById("logoutBtn");
+const undoBtn = document.getElementById("undoBtn");
+
+// Inputs
+const title = document.getElementById("title");
+const url = document.getElementById("url");
+
+// --- Storage prüfen ---
+function storageAvailable(type) {
+    try {
+        const storage = window[type];
+        const testKey = '__storage_test__';
+        storage.setItem(testKey, testKey);
+        storage.removeItem(testKey);
+        return true;
+    } catch(e) {
+        return false;
+    }
+}
+
+if(!storageAvailable('localStorage')){
+    alert("⚠️ Achtung: localStorage ist blockiert oder im Privatmodus.\n" +
+          "Neue Links können nicht gespeichert werden.");
+}
+
+// --- Default Links ---
+let defaultLinks = [
+  { title: "Adventskalender", url: "https://kalirusi5511.github.io/Adventskalender/" },
+  { title: "Mein Markt Plugin Projekt", url: "https://kalirusi5511.github.io/Mein-Markt-Plugin-Projekt/" },
+  { title: "WhatsApp Channel", url: "https://www.whatsapp.com/channel/0029Vb62Zu4DTkK6HVAfJZ39" },
+  { title: "Reddit Profil", url: "https://www.reddit.com/user/Ill_Excitement_2265/" },
+  { title: "Facebook Profil", url: "https://www.facebook.com/profile.php?id=61580239601449" },
+  { title: "TikTok Profil", url: "https://www.tiktok.com/@kaliminu551?lang=de-DE" }
+];
+
+// --- Links laden ---
+let linksData = storageAvailable('localStorage')
+    ? JSON.parse(localStorage.getItem("linksData") || JSON.stringify(defaultLinks))
+    : defaultLinks;
+
+let undoStack = storageAvailable('localStorage')
+    ? JSON.parse(localStorage.getItem("undoStack") || "[]")
+    : [];
+
+// Speichern
+function save(){
+    if(!storageAvailable('localStorage')) return;
+    try{
+        localStorage.setItem("linksData", JSON.stringify(linksData));
+        localStorage.setItem("undoStack", JSON.stringify(undoStack));
+    } catch(e){
+        console.warn("LocalStorage blockiert oder voll", e);
+    }
+}
+
+// Controls
+function renderControls(){
+    addBtn.classList.toggle("hidden", role!=="owner");
+    logoutBtn.classList.toggle("hidden", role!=="owner");
+    loginBtn.classList.toggle("hidden", role==="owner");
+    undoBtn.classList.toggle("hidden", role!=="owner" || undoStack.length === 0);
+
+    linksDiv.querySelectorAll(".del").forEach(b=>{
+        b.style.display = role==="owner" ? "block" : "none";
+    });
+}
+
+// Link erstellen
+function createLinkElement(title, url){
+    const d = document.createElement("div");
+    d.className = "link";
+
+    const a = document.createElement("a");
+    a.href = url;
+    a.textContent = title;
+    a.target = "_blank";
+    a.rel = "noopener noreferrer";
+
+    const del = document.createElement("button");
+    del.textContent = "❌ Löschen";
+    del.className = "linkBtn del";
+    del.onclick = () => {
+        undoStack.push({ title, url });
+        linksData = linksData.filter(l => !(l.title === title && l.url === url));
+        d.remove();
+        save();
+        renderControls();
+    };
+
+    d.append(a, del);
+    return d;
+}
+
+// Links laden
+function loadLinks(){
+    linksDiv.innerHTML = "";
+    linksData.forEach(l=>{
+        linksDiv.appendChild(createLinkElement(l.title, l.url));
+    });
+    renderControls();
+}
+
+// SHA256
+async function sha256(text){
+    const enc = new TextEncoder().encode(text);
+    const buf = await crypto.subtle.digest("SHA-256", enc);
+    return [...new Uint8Array(buf)].map(b=>b.toString(16).padStart(2,"0")).join("");
+}
+
+// Admin Login
+loginBtn.onclick = async () => {
+    const pin = prompt("Admin PIN eingeben:");
+    if(!pin) return;
+
+    const hash = await sha256(pin);
+    if(hash === ADMIN_PIN_HASH){
+        role = "owner";
+        alert("Admin-Modus aktiviert");
+        renderControls();
+    } else {
+        alert("Falscher PIN");
+    }
+};
+
+// Logout
+logoutBtn.onclick = () => {
+    role = "viewer";
+    renderControls();
+};
+
+// Link hinzufügen
+addBtn.onclick = () => {
+    if(role!=="owner") return;
+    const t = title.value.trim();
+    const u = url.value.trim();
+    if(!t||!u) return alert("Titel & URL fehlen");
+
+    linksData.push({ title: t, url: u });
+    linksDiv.appendChild(createLinkElement(t, u));
+    save();
+
+    title.value = ""; url.value = "";
+    renderControls();
+};
+
+// Undo
+undoBtn.onclick = () => {
+    if(!undoStack.length) return alert("Nichts zum Wiederherstellen");
+    const { title, url } = undoStack.pop();
+    linksData.push({ title, url });
+    linksDiv.appendChild(createLinkElement(title, url));
+    save();
+    renderControls();
+};
+
+// Initial
+loadLinks();
+</script>
+
+</body>
+</html>
