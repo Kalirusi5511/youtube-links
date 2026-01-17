@@ -80,16 +80,14 @@ hr{border:0;border-top:1px solid #333;margin:16px 0}
 </div>
 
 <script>
-const PIN_HASH = "03ac674216f3e15c761ee1a5e255f067953623c8b388b4459e2d5b9b0b3e3c1b";
-
 let role = "viewer";
+
 const linksDiv = document.getElementById("links");
 const addBtn = document.getElementById("addBtn");
 const loginBtn = document.getElementById("loginBtn");
 const logoutBtn = document.getElementById("logoutBtn");
 const undoBtn = document.getElementById("undoBtn");
 
-// **Wichtig: Inputs definieren**
 const title = document.getElementById("title");
 const url = document.getElementById("url");
 
@@ -141,6 +139,14 @@ function save(){
     }
 }
 
+// Admin über URL aktivieren
+function checkAdminUrl(){
+    const params = new URLSearchParams(window.location.search);
+    if(params.get("admin") === "1"){
+        role = "owner";
+    }
+}
+
 // Kontrolle der Buttons
 function renderControls(){
     addBtn.classList.toggle("hidden", role!=="owner");
@@ -188,25 +194,10 @@ function loadLinks(){
     renderControls();
 }
 
-// SHA256 Hashfunktion
-async function sha256(text){
-    const enc = new TextEncoder().encode(text);
-    const buf = await crypto.subtle.digest("SHA-256", enc);
-    return [...new Uint8Array(buf)].map(b=>b.toString(16).padStart(2,"0")).join("");
-}
-
-// Admin Login
-loginBtn.onclick = async () => {
-    const pin = prompt("Admin PIN eingeben:");
-    if(!pin) return;
-    const hash = await sha256(pin);
-    if(hash === PIN_HASH){
-        role = "owner";
-        alert("Admin-Modus aktiviert");
-        renderControls();
-    } else {
-        alert("Falscher PIN");
-    }
+// Admin Login (optional, falls du ihn behalten willst)
+loginBtn.onclick = () => {
+    role = "owner";
+    renderControls();
 };
 
 // Admin Logout
@@ -241,6 +232,7 @@ undoBtn.onclick = () => {
 };
 
 // Initial
+checkAdminUrl();
 loadLinks();
 </script>
 
