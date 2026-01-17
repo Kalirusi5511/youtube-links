@@ -80,16 +80,31 @@ hr{border:0;border-top:1px solid #333;margin:16px 0}
 </div>
 
 <script>
-let role = "viewer";
+const PIN_HASH = "03ac674216f3e15c761ee1a5e255f067953623c8b388b4459e2d5b9b0b3e3c1b";
 
+let role = "viewer";
 const linksDiv = document.getElementById("links");
 const addBtn = document.getElementById("addBtn");
 const loginBtn = document.getElementById("loginBtn");
 const logoutBtn = document.getElementById("logoutBtn");
 const undoBtn = document.getElementById("undoBtn");
 
+// Inputs
 const title = document.getElementById("title");
 const url = document.getElementById("url");
+
+// --- Admin-URL prüfen ---
+function checkAdminUrl(){
+    const params = new URLSearchParams(window.location.search);
+
+    // **Hier dein geheimer Code**
+    // Beispiel: ?admin=kalirusi
+    if(params.get("admin") === "kalirusi"){
+        role = "owner";
+    }
+}
+
+checkAdminUrl();
 
 // --- Storage prüfen ---
 function storageAvailable(type) {
@@ -109,7 +124,7 @@ if(!storageAvailable('localStorage')){
           "Neue Links können nicht gespeichert werden.");
 }
 
-// --- Fest initialisierte Links ---
+// --- Default Links ---
 let defaultLinks = [
   { title: "Adventskalender", url: "https://kalirusi5511.github.io/Adventskalender/" },
   { title: "Mein Markt Plugin Projekt", url: "https://kalirusi5511.github.io/Mein-Markt-Plugin-Projekt/" },
@@ -119,7 +134,7 @@ let defaultLinks = [
   { title: "TikTok Profil", url: "https://www.tiktok.com/@kaliminu551?lang=de-DE" }
 ];
 
-// --- Links aus Storage laden oder default verwenden ---
+// --- Links laden ---
 let linksData = storageAvailable('localStorage')
     ? JSON.parse(localStorage.getItem("linksData") || JSON.stringify(defaultLinks))
     : defaultLinks;
@@ -128,7 +143,7 @@ let undoStack = storageAvailable('localStorage')
     ? JSON.parse(localStorage.getItem("undoStack") || "[]")
     : [];
 
-// Speichern nur, wenn Storage verfügbar
+// Speichern
 function save(){
     if(!storageAvailable('localStorage')) return;
     try{
@@ -139,15 +154,7 @@ function save(){
     }
 }
 
-// Admin über URL aktivieren
-function checkAdminUrl(){
-    const params = new URLSearchParams(window.location.search);
-    if(params.get("admin") === "1"){
-        role = "owner";
-    }
-}
-
-// Kontrolle der Buttons
+// Controls
 function renderControls(){
     addBtn.classList.toggle("hidden", role!=="owner");
     logoutBtn.classList.toggle("hidden", role!=="owner");
@@ -159,7 +166,7 @@ function renderControls(){
     });
 }
 
-// Link-Element erstellen
+// Link erstellen
 function createLinkElement(title, url){
     const d = document.createElement("div");
     d.className = "link";
@@ -185,7 +192,7 @@ function createLinkElement(title, url){
     return d;
 }
 
-// Alle Links laden
+// Links laden
 function loadLinks(){
     linksDiv.innerHTML = "";
     linksData.forEach(l=>{
@@ -194,13 +201,28 @@ function loadLinks(){
     renderControls();
 }
 
-// Admin Login (optional, falls du ihn behalten willst)
-loginBtn.onclick = () => {
-    role = "owner";
-    renderControls();
+// SHA256
+async function sha256(text){
+    const enc = new TextEncoder().encode(text);
+    const buf = await crypto.subtle.digest("SHA-256", enc);
+    return [...new Uint8Array(buf)].map(b=>b.toString(16).padStart(2,"0")).join("");
+}
+
+// Admin Login (optional)
+loginBtn.onclick = async () => {
+    const pin = prompt("Admin PIN eingeben:");
+    if(!pin) return;
+    const hash = await sha256(pin);
+    if(hash === PIN_HASH){
+        role = "owner";
+        alert("Admin-Modus aktiviert");
+        renderControls();
+    } else {
+        alert("Falscher PIN");
+    }
 };
 
-// Admin Logout
+// Logout
 logoutBtn.onclick = () => {
     role = "viewer";
     renderControls();
@@ -221,7 +243,7 @@ addBtn.onclick = () => {
     renderControls();
 };
 
-// Rückgängig
+// Undo
 undoBtn.onclick = () => {
     if(!undoStack.length) return alert("Nichts zum Wiederherstellen");
     const { title, url } = undoStack.pop();
@@ -232,7 +254,6 @@ undoBtn.onclick = () => {
 };
 
 // Initial
-checkAdminUrl();
 loadLinks();
 </script>
 
