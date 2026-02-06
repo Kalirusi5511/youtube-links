@@ -79,10 +79,8 @@ hr{border:0;border-top:1px solid #333;margin:20px 0}
 </div>
 <script>
 // ==========================================
-// 1. KONFIGURATION (PIN: 1234)
+// KONFIGURATION (KEIN PIN)
 // ==========================================
-// Der korrekte Hash für 1234
-const PERMANENT_PIN_HASH = "b7a6c6d6b4b7fa2e2b8a6e6b2d91c9e2cb9d9a4a3b77c8e9c5c9b2d4b6c1c5e";
 
 const defaultLinks = [
     { title: "🎄 Adventskalender", url: "https://kalirusi5511.github.io/Adventskalender/" },
@@ -96,33 +94,19 @@ const defaultLinks = [
 ];
 
 // ==========================================
-// 2. LOGIK
+// LOGIK
 // ==========================================
-let role = "viewer";
+let role = "owner"; // 👈 IMMER ADMIN
 let linksData = [];
 let undoStack = [];
+
 const linksDiv = document.getElementById("links");
 const adminArea = document.getElementById("adminArea");
-const loginBtn = document.getElementById("loginBtn");
-const logoutBtn = document.getElementById("logoutBtn");
 const undoBtn = document.getElementById("undoBtn");
-
-async function sha256(text){
-    const enc = new TextEncoder().encode(text);
-    const buf = await crypto.subtle.digest("SHA-256", enc);
-    return [...new Uint8Array(buf)].map(b=>b.toString(16).padStart(2,"0")).join("");
-}
 
 function init() {
     const saved = localStorage.getItem("linksData");
-    if (saved) {
-        linksData = JSON.parse(saved);
-        defaultLinks.forEach(def => {
-            if (!linksData.some(l => l.url === def.url)) linksData.push(def);
-        });
-    } else {
-        linksData = [...defaultLinks];
-    }
+    linksData = saved ? JSON.parse(saved) : [...defaultLinks];
     render();
 }
 
@@ -132,21 +116,22 @@ function render() {
         const d = document.createElement("div");
         d.className = "link";
         d.innerHTML = `<a href="${l.url}" target="_blank" rel="noopener">${l.title}</a>`;
+
         const del = document.createElement("button");
         del.textContent = "Löschen";
-        del.className = "linkBtn del " + (role === "owner" ? "" : "hidden");
+        del.className = "linkBtn del";
         del.onclick = () => {
             undoStack.push(linksData[index]);
             linksData.splice(index, 1);
             save();
         };
+
         d.appendChild(del);
         linksDiv.appendChild(d);
     });
-    adminArea.classList.toggle("hidden", role !== "owner");
-    logoutBtn.classList.toggle("hidden", role !== "owner");
-    loginBtn.classList.toggle("hidden", role === "owner");
-    undoBtn.classList.toggle("hidden", role !== "owner" || undoStack.length === 0);
+
+    adminArea.classList.remove("hidden");
+    undoBtn.classList.toggle("hidden", undoStack.length === 0);
 }
 
 function save() {
@@ -154,27 +139,10 @@ function save() {
     render();
 }
 
-loginBtn.onclick = async () => {
-    const pin = prompt("Admin PIN eingeben:");
-    if(!pin) return;
-    const inputHash = await sha256(pin);
-    if(inputHash === PERMANENT_PIN_HASH){
-        role = "owner";
-        render();
-    } else {
-        alert("❌ PIN falsch.");
-    }
-};
-
-logoutBtn.onclick = () => {
-    role = "viewer";
-    render();
-};
-
 document.getElementById("addBtn").onclick = () => {
     const t = document.getElementById("title").value.trim();
     const u = document.getElementById("url").value.trim();
-    if(t && u) {
+    if (t && u) {
         linksData.push({ title: t, url: u });
         document.getElementById("title").value = "";
         document.getElementById("url").value = "";
@@ -183,11 +151,12 @@ document.getElementById("addBtn").onclick = () => {
 };
 
 undoBtn.onclick = () => {
-    if(undoStack.length > 0) {
+    if (undoStack.length > 0) {
         linksData.push(undoStack.pop());
         save();
     }
 };
+
 document.addEventListener("DOMContentLoaded", init);
 </script>
 </body>
