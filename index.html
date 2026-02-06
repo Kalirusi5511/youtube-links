@@ -4,8 +4,8 @@
 <meta charset="UTF-8">
 <title>🔗 Externe Links | Projekt-Übersicht</title>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
 <style>
-/* Reset & Basis-Layout */
 *{box-sizing:border-box}
 body{
     font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
@@ -15,143 +15,182 @@ body{
     padding:20px;
     display:flex;
     justify-content:center;
-    line-height: 1.5;
 }
-.app{width:100%;max-width:520px; animation: fadeIn 0.5s ease-in;}
-@keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
-h2{text-align:center;margin-bottom:20px; color: #fff;}
-/* Formularelemente */
+.app{width:100%;max-width:520px}
+h2{text-align:center}
+
 input,button{
-    width:100%; padding:14px; margin:8px 0; border-radius:10px;
-    border:none; font-size:15px; outline: none;
+    width:100%;
+    padding:14px;
+    margin:8px 0;
+    border-radius:10px;
+    border:none;
+    font-size:15px;
 }
-input{background:#222;color:#fff; border: 1px solid #333;}
-input:focus{border-color: #38bdf8;}
-button{font-weight:bold;cursor:pointer; transition: transform 0.1s, background 0.2s;}
-button:active{transform: scale(0.98);}
-#addBtn{background:#38bdf8;color:#0f172a}
-#addBtn:hover{background:#0ea5e9}
-.row{display:flex;gap:10px;flex-wrap:wrap; margin-top: 5px;}
-.linkBtn{
-    background:#333; color:#fff; padding:10px 14px;
-    border-radius:8px; font-size:13px; flex: 1; min-width: 120px;
-}
-.linkBtn:hover{background:#444}
-/* Link-Karten */
+input{background:#222;color:#fff;border:1px solid #333}
+button{cursor:pointer;font-weight:bold}
+#addBtn{background:#38bdf8;color:#000}
+.row{display:flex;gap:10px;flex-wrap:wrap}
+.linkBtn{background:#333;color:#fff;border-radius:8px}
 .link{
-    background:#1a1a1a; padding:15px; border-radius:12px;
-    margin-bottom:12px; display:flex; flex-direction:row;
-    justify-content:space-between; align-items:center;
-    border: 1px solid #222; transition: background 0.2s;
+    background:#1a1a1a;
+    padding:15px;
+    border-radius:12px;
+    margin-bottom:10px;
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
 }
-a{ color:#3ea6ff; text-decoration:none; font-weight: 500; word-break:break-all; flex: 1; margin-right: 10px; }
-a:hover{text-decoration: underline;}
-.del{ background:#442222; color:#ff6666; padding:6px 10px; border-radius:6px; font-size:12px; width: auto; margin: 0; }
-.del:hover{background:#662222}
-hr{border:0;border-top:1px solid #333;margin:20px 0}
-.hidden{display:none !important}
-.security-info { font-size: 11px; color: #666; text-align: center; margin-top: 10px; }
-@media (max-width: 400px) {
-    .link{flex-direction: column; align-items: flex-start;}
-    .del{margin-top: 10px; width: 100%;}
-}
+a{color:#3ea6ff;text-decoration:none;flex:1}
+.del{background:#442222;color:#ff6666;padding:6px 10px;border-radius:6px}
+.hidden{display:none}
 </style>
 </head>
+
 <body>
 <div class="app">
     <h2>🔗 Externe Links</h2>
+
     <div id="adminArea" class="hidden">
         <input id="title" placeholder="Linktitel">
         <input id="url" placeholder="https://example.com">
         <button id="addBtn">+ Link hinzufügen</button>
     </div>
+
     <div class="row">
         <button id="loginBtn" class="linkBtn">🔐 Admin Login</button>
         <button id="logoutBtn" class="linkBtn hidden">🔓 Logout</button>
         <button id="undoBtn" class="linkBtn hidden">↩️ Rückgängig</button>
     </div>
+
     <hr>
     <div id="links"></div>
-    <div class="security-info">
-        ❌ Keine Sicherheitsfragen hinterlegt. <br>
-        Standard-PIN aktiv.
-    </div>
 </div>
+
 <script>
 // ==========================================
-// KONFIGURATION (KEIN PIN)
+// KONFIGURATION
 // ==========================================
 
+// 👉 HIER PIN ÄNDERN
+const ADMIN_PIN = "5402";
+
+// ==========================================
+// STANDARD LINKS
+// ==========================================
 const defaultLinks = [
     { title: "🎄 Adventskalender", url: "https://kalirusi5511.github.io/Adventskalender/" },
     { title: "🛒 Mein Markt Plugin Projekt", url: "https://kalirusi5511.github.io/Mein-Markt-Plugin-Projekt/" },
     { title: "📢 WhatsApp Channel", url: "https://whatsapp.com/channel/0029Vb62Zu4DTkK6HVAfJZ39" },
-    { title: "🎮 Discord Server", url: "https://discord.gg/NQ2rjRQE" },
-    { title: "🛠️ Modrinth: Kays Plugins", url: "https://modrinth.com/user/Kaliminu5511" },
-    { title: "📱 Reddit Profil", url: "https://www.reddit.com/user/Ill_Excitement_2265/" },
-    { title: "🎵 TikTok Profil", url: "https://www.tiktok.com/@kaliminu551?lang=de-DE" },
-    { title: "🎁 Dailyrewards Plugin", url: "https://github.com/Kalirusi5511/Dailyrewards-Plugin" },
+    { title: "🎮 Discord Server", url: "https://discord.gg/NQ2rjRQE" }
 ];
 
 // ==========================================
-// LOGIK
+// VARIABLEN
 // ==========================================
-let role = "owner"; // 👈 IMMER ADMIN
+let role = "viewer";
 let linksData = [];
 let undoStack = [];
+let PIN_HASH = null;
 
 const linksDiv = document.getElementById("links");
 const adminArea = document.getElementById("adminArea");
+const loginBtn = document.getElementById("loginBtn");
+const logoutBtn = document.getElementById("logoutBtn");
 const undoBtn = document.getElementById("undoBtn");
 
-function init() {
+// ==========================================
+// HASH FUNKTION
+// ==========================================
+async function sha256(text){
+    const data = new TextEncoder().encode(text);
+    const hash = await crypto.subtle.digest("SHA-256", data);
+    return [...new Uint8Array(hash)]
+        .map(b => b.toString(16).padStart(2, "0"))
+        .join("");
+}
+
+// ==========================================
+// INIT
+// ==========================================
+async function init(){
+    PIN_HASH = await sha256(ADMIN_PIN);
+
     const saved = localStorage.getItem("linksData");
     linksData = saved ? JSON.parse(saved) : [...defaultLinks];
     render();
 }
 
-function render() {
+// ==========================================
+// RENDER
+// ==========================================
+function render(){
     linksDiv.innerHTML = "";
-    linksData.forEach((l, index) => {
-        const d = document.createElement("div");
-        d.className = "link";
-        d.innerHTML = `<a href="${l.url}" target="_blank" rel="noopener">${l.title}</a>`;
+    linksData.forEach((l, i) => {
+        const div = document.createElement("div");
+        div.className = "link";
 
-        const del = document.createElement("button");
-        del.textContent = "Löschen";
-        del.className = "linkBtn del";
-        del.onclick = () => {
-            undoStack.push(linksData[index]);
-            linksData.splice(index, 1);
-            save();
-        };
+        div.innerHTML = `<a href="${l.url}" target="_blank">${l.title}</a>`;
 
-        d.appendChild(del);
-        linksDiv.appendChild(d);
+        if(role === "owner"){
+            const del = document.createElement("button");
+            del.textContent = "Löschen";
+            del.className = "del";
+            del.onclick = () => {
+                undoStack.push(linksData[i]);
+                linksData.splice(i,1);
+                save();
+            };
+            div.appendChild(del);
+        }
+        linksDiv.appendChild(div);
     });
 
-    adminArea.classList.remove("hidden");
-    undoBtn.classList.toggle("hidden", undoStack.length === 0);
+    adminArea.classList.toggle("hidden", role !== "owner");
+    loginBtn.classList.toggle("hidden", role === "owner");
+    logoutBtn.classList.toggle("hidden", role !== "owner");
+    undoBtn.classList.toggle("hidden", undoStack.length === 0 || role !== "owner");
 }
 
-function save() {
+function save(){
     localStorage.setItem("linksData", JSON.stringify(linksData));
     render();
 }
 
+// ==========================================
+// EVENTS
+// ==========================================
+loginBtn.onclick = async () => {
+    const pin = prompt("Admin PIN eingeben:");
+    if(!pin) return;
+
+    const hash = await sha256(pin);
+    if(hash === PIN_HASH){
+        role = "owner";
+        render();
+    } else {
+        alert("❌ PIN falsch");
+    }
+};
+
+logoutBtn.onclick = () => {
+    role = "viewer";
+    render();
+};
+
 document.getElementById("addBtn").onclick = () => {
-    const t = document.getElementById("title").value.trim();
-    const u = document.getElementById("url").value.trim();
-    if (t && u) {
-        linksData.push({ title: t, url: u });
-        document.getElementById("title").value = "";
-        document.getElementById("url").value = "";
+    const t = title.value.trim();
+    const u = url.value.trim();
+    if(t && u){
+        linksData.push({title:t, url:u});
+        title.value = "";
+        url.value = "";
         save();
     }
 };
 
 undoBtn.onclick = () => {
-    if (undoStack.length > 0) {
+    if(undoStack.length){
         linksData.push(undoStack.pop());
         save();
     }
