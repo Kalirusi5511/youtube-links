@@ -2,249 +2,267 @@
 <html lang="de">
 <head>
 <meta charset="UTF-8">
-<title>Externe Links</title>
+<title>🔗 Externe Links | Projekt-Übersicht</title>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-
 <style>
+/* Reset & Basis-Layout */
 *{box-sizing:border-box}
 body{
-    font-family:Arial,Roboto,sans-serif;
+    font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
     background:#0f0f0f;
     color:#fff;
     margin:0;
     padding:20px;
     display:flex;
-    justify-content:center
+    justify-content:center;
+    line-height: 1.5;
 }
-.app{width:100%;max-width:520px}
-h2{text-align:center;margin-bottom:14px}
+.app{width:100%;max-width:520px; animation: fadeIn 0.5s ease-in;}
 
+/* Animation für sanftes Laden */
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+h2{text-align:center;margin-bottom:20px; color: #fff;}
+
+/* Formularelemente */
 input,button{
     width:100%;
-    padding:12px;
-    margin:6px 0;
-    border-radius:8px;
+    padding:14px;
+    margin:8px 0;
+    border-radius:10px;
     border:none;
-    font-size:15px
+    font-size:15px;
+    outline: none;
 }
-input{background:#222;color:#fff}
-button{font-weight:bold;cursor:pointer}
+input{background:#222;color:#fff; border: 1px solid #333;}
+input:focus{border-color: #ff0000;}
+
+button{font-weight:bold;cursor:pointer; transition: transform 0.1s, background 0.2s;}
+button:active{transform: scale(0.98);}
 
 #addBtn{background:#ff0000;color:#fff}
 #addBtn:hover{background:#cc0000}
 
-.row{display:flex;gap:8px;flex-wrap:wrap}
-
+.row{display:flex;gap:10px;flex-wrap:wrap; margin-top: 5px;}
 .linkBtn{
     background:#333;
     color:#fff;
-    padding:8px 10px;
-    border-radius:6px;
-    font-size:13px
+    padding:10px 14px;
+    border-radius:8px;
+    font-size:13px;
+    flex: 1;
+    min-width: 120px;
 }
-.linkBtn:hover{background:#555}
+.linkBtn:hover{background:#444}
 
+/* Link-Karten */
 .link{
     background:#1a1a1a;
-    padding:10px;
-    border-radius:8px;
-    margin-bottom:10px;
+    padding:15px;
+    border-radius:12px;
+    margin-bottom:12px;
     display:flex;
-    flex-direction:column;
-    gap:6px
+    flex-direction:row;
+    justify-content:space-between;
+    align-items:center;
+    border: 1px solid #222;
+    transition: background 0.2s;
 }
+.link:hover{background: #222;}
 
-a{color:#3ea6ff;text-decoration:none;word-break:break-all}
-hr{border:0;border-top:1px solid #333;margin:16px 0}
-.hidden{display:none}
+a{
+    color:#3ea6ff;
+    text-decoration:none;
+    font-weight: 500;
+    word-break:break-all;
+    flex: 1;
+    margin-right: 10px;
+}
+a:hover{text-decoration: underline;}
+
+.del{
+    background:#442222;
+    color:#ff6666;
+    padding:6px 10px;
+    border-radius:6px;
+    font-size:12px;
+    width: auto;
+    margin: 0;
+}
+.del:hover{background:#662222}
+
+hr{border:0;border-top:1px solid #333;margin:20px 0}
+.hidden{display:none !important}
+
+/* Responsive Anpassungen */
+@media (max-width: 400px) {
+    .link{flex-direction: column; align-items: flex-start;}
+    .del{margin-top: 10px; width: 100%;}
+}
 </style>
 </head>
 <body>
 
 <div class="app">
-<h2>🔗 Externe Links</h2>
+    <h2>🔗 Externe Links</h2>
+    
+    <!-- Admin Bereich -->
+    <div id="adminArea" class="hidden">
+        <input id="title" placeholder="Linktitel">
+        <input id="url" placeholder="https://example.com">
+        <button id="addBtn">+ Link hinzufügen</button>
+    </div>
 
-<input id="title" placeholder="Linktitel">
-<input id="url" placeholder="https://example.com">
+    <div class="row">
+        <button id="loginBtn" class="linkBtn">🔐 Admin Login</button>
+        <button id="logoutBtn" class="linkBtn hidden">🔓 Logout</button>
+        <button id="undoBtn" class="linkBtn hidden">↩️ Rückgängig</button>
+    </div>
 
-<button id="addBtn" class="hidden">+ Link hinzufügen</button>
-
-<div class="row">
-    <button id="loginBtn" class="linkBtn">🔐 Admin Login</button>
-    <button id="logoutBtn" class="linkBtn hidden">🔓 Logout</button>
-    <button id="undoBtn" class="linkBtn hidden">↩️ Rückgängig</button>
-</div>
-
-<hr>
-<div id="links"></div>
+    <hr>
+    <div id="links"></div>
 </div>
 
 <script>
-// === ADMIN PASSWORD HASH (PIN 5564) ===
+// === KONFIGURATION & LINKS ===
 const ADMIN_PIN_HASH = "dbff5341acad5e2a58db4efd5e72e2d9a0a843a28e02b1183c68162d0a3a3de6";
 
-let role = "viewer";
+const defaultLinks = [
+    { title: "🎄 Adventskalender", url: "https://kalirusi5511.github.io/Adventskalender/" },
+    { title: "🛒 Mein Markt Plugin Projekt", url: "https://kalirusi5511.github.io/Mein-Markt-Plugin-Projekt/" },
+    { title: "📢 WhatsApp Channel", url: "https://whatsapp.com/channel/0029Vb62Zu4DTkK6HVAfJZ39" },
+    { title: "💬 WhatsApp Gruppe", url: "https://chat.whatsapp.com/LRSrPxyPf1k01fbs2cjYbU" },
+    { title: "🎮 Discord Server", url: "https://discord.gg/spFGVWw8" },
+    { title: "📦 Modrinth: LeafMC Plugins", url: "https://modrinth.com/user/jw4TuIGk" },
+    { title: "🛠️ Modrinth: Kays Plugins", url: "https://modrinth.com/user/Kaliminu5511" },
+    { title: "📱 Reddit Profil", url: "https://www.reddit.com/user/Ill_Excitement_2265/" },
+    { title: "🔵 Facebook Profil", url: "https://www.facebook.com/profile.php?id=61580239601449" },
+    { title: "🎵 TikTok Profil", url: "https://www.tiktok.com/@kaliminu551?lang=de-DE" },
+    { title: "🎁 DayRewards Plugin", url: "https://github.com/Kalirusi5511/DayyRewards" },
+    { title: "⚖️ Punish Plugin", url: "https://github.com/Kalirusi5511/PunishPlugin" }
+];
 
+let role = "viewer";
+let linksData = [];
+let undoStack = [];
+
+// DOM Elemente
 const linksDiv = document.getElementById("links");
+const adminArea = document.getElementById("adminArea");
 const addBtn = document.getElementById("addBtn");
 const loginBtn = document.getElementById("loginBtn");
 const logoutBtn = document.getElementById("logoutBtn");
 const undoBtn = document.getElementById("undoBtn");
+const titleInp = document.getElementById("title");
+const urlInp = document.getElementById("url");
 
-// Inputs
-const title = document.getElementById("title");
-const url = document.getElementById("url");
+// --- Kern-Funktionen ---
 
-// --- Storage prüfen ---
-function storageAvailable(type) {
-    try {
-        const storage = window[type];
-        const testKey = '__storage_test__';
-        storage.setItem(testKey, testKey);
-        storage.removeItem(testKey);
-        return true;
-    } catch(e) {
-        return false;
+function init() {
+    // LocalStorage Check & Sync
+    if (localStorage.getItem("linksData")) {
+        linksData = JSON.parse(localStorage.getItem("linksData"));
+        // Automatisches Update, falls neue Default-Links im Code stehen
+        defaultLinks.forEach(def => {
+            if (!linksData.some(l => l.url === def.url)) {
+                linksData.push(def);
+            }
+        });
+    } else {
+        linksData = [...defaultLinks];
     }
+    renderLinks();
 }
 
-if(!storageAvailable('localStorage')){
-    alert("⚠️ Achtung: localStorage ist blockiert oder im Privatmodus.\n" +
-          "Neue Links können nicht gespeichert werden.");
-}
-
-// --- Default Links ---
-let defaultLinks = [
-  { title: "Adventskalender", url: "https://kalirusi5511.github.io/Adventskalender/" },
-  { title: "Mein Markt Plugin Projekt", url: "https://kalirusi5511.github.io/Mein-Markt-Plugin-Projekt/" },
-  { title: "WhatsApp Channel", url: "https://www.whatsapp.com/channel/0029Vb62Zu4DTkK6HVAfJZ39" },
-  { title: "Reddit Profil", url: "https://www.reddit.com/user/Ill_Excitement_2265/" },
-  { title: "Facebook Profil", url: "https://www.facebook.com/profile.php?id=61580239601449" },
-  { title: "TikTok Profil", url: "https://www.tiktok.com/@kaliminu551?lang=de-DE" }
-];
-
-// --- Links laden ---
-let linksData = storageAvailable('localStorage')
-    ? JSON.parse(localStorage.getItem("linksData") || JSON.stringify(defaultLinks))
-    : defaultLinks;
-
-let undoStack = storageAvailable('localStorage')
-    ? JSON.parse(localStorage.getItem("undoStack") || "[]")
-    : [];
-
-// Speichern
-function save(){
-    if(!storageAvailable('localStorage')) return;
-    try{
-        localStorage.setItem("linksData", JSON.stringify(linksData));
-        localStorage.setItem("undoStack", JSON.stringify(undoStack));
-    } catch(e){
-        console.warn("LocalStorage blockiert oder voll", e);
-    }
-}
-
-// Controls
-function renderControls(){
-    addBtn.classList.toggle("hidden", role!=="owner");
-    logoutBtn.classList.toggle("hidden", role!=="owner");
-    loginBtn.classList.toggle("hidden", role==="owner");
-    undoBtn.classList.toggle("hidden", role!=="owner" || undoStack.length === 0);
-
-    linksDiv.querySelectorAll(".del").forEach(b=>{
-        b.style.display = role==="owner" ? "block" : "none";
-    });
-}
-
-// Link erstellen
-function createLinkElement(title, url){
-    const d = document.createElement("div");
-    d.className = "link";
-
-    const a = document.createElement("a");
-    a.href = url;
-    a.textContent = title;
-    a.target = "_blank";
-    a.rel = "noopener noreferrer";
-
-    const del = document.createElement("button");
-    del.textContent = "❌ Löschen";
-    del.className = "linkBtn del";
-    del.onclick = () => {
-        undoStack.push({ title, url });
-        linksData = linksData.filter(l => !(l.title === title && l.url === url));
-        d.remove();
-        save();
-        renderControls();
-    };
-
-    d.append(a, del);
-    return d;
-}
-
-// Links laden
-function loadLinks(){
+function renderLinks() {
     linksDiv.innerHTML = "";
-    linksData.forEach(l=>{
-        linksDiv.appendChild(createLinkElement(l.title, l.url));
+    linksData.forEach((l, index) => {
+        const d = document.createElement("div");
+        d.className = "link";
+        
+        const a = document.createElement("a");
+        a.href = l.url;
+        a.textContent = l.title;
+        a.target = "_blank";
+        a.rel = "noopener noreferrer";
+        
+        const del = document.createElement("button");
+        del.textContent = "Löschen";
+        del.className = "linkBtn del " + (role === "owner" ? "" : "hidden");
+        del.onclick = () => deleteLink(index);
+        
+        d.append(a, del);
+        linksDiv.appendChild(d);
     });
     renderControls();
 }
 
-// SHA256
+function renderControls() {
+    adminArea.classList.toggle("hidden", role !== "owner");
+    logoutBtn.classList.toggle("hidden", role !== "owner");
+    loginBtn.classList.toggle("hidden", role === "owner");
+    undoBtn.classList.toggle("hidden", role !== "owner" || undoStack.length === 0);
+}
+
+function deleteLink(index) {
+    undoStack.push(linksData[index]);
+    linksData.splice(index, 1);
+    saveAndRefresh();
+}
+
+function saveAndRefresh() {
+    localStorage.setItem("linksData", JSON.stringify(linksData));
+    localStorage.setItem("undoStack", JSON.stringify(undoStack));
+    renderLinks();
+}
+
+// --- Event Handler ---
+
+loginBtn.onclick = async () => {
+    const pin = prompt("Admin PIN eingeben:");
+    if(!pin) return;
+    const hash = await sha256(pin);
+    if(hash === ADMIN_PIN_HASH){
+        role = "owner";
+        alert("✅ Admin-Modus aktiviert");
+        renderLinks();
+    } else {
+        alert("❌ Falscher PIN");
+    }
+};
+
+logoutBtn.onclick = () => {
+    role = "viewer";
+    renderLinks();
+};
+
+addBtn.onclick = () => {
+    const t = titleInp.value.trim();
+    const u = urlInp.value.trim();
+    if(!t || !u) return alert("Bitte Titel und URL eingeben!");
+    linksData.push({ title: t, url: u });
+    titleInp.value = ""; urlInp.value = "";
+    saveAndRefresh();
+};
+
+undoBtn.onclick = () => {
+    if(undoStack.length > 0) {
+        linksData.push(undoStack.pop());
+        saveAndRefresh();
+    }
+};
+
 async function sha256(text){
     const enc = new TextEncoder().encode(text);
     const buf = await crypto.subtle.digest("SHA-256", enc);
     return [...new Uint8Array(buf)].map(b=>b.toString(16).padStart(2,"0")).join("");
 }
 
-// Admin Login
-loginBtn.onclick = async () => {
-    const pin = prompt("Admin PIN eingeben:");
-    if(!pin) return;
-
-    const hash = await sha256(pin);
-    if(hash === ADMIN_PIN_HASH){
-        role = "owner";
-        alert("Admin-Modus aktiviert");
-        renderControls();
-    } else {
-        alert("Falscher PIN");
-    }
-};
-
-// Logout
-logoutBtn.onclick = () => {
-    role = "viewer";
-    renderControls();
-};
-
-// Link hinzufügen
-addBtn.onclick = () => {
-    if(role!=="owner") return;
-    const t = title.value.trim();
-    const u = url.value.trim();
-    if(!t||!u) return alert("Titel & URL fehlen");
-
-    linksData.push({ title: t, url: u });
-    linksDiv.appendChild(createLinkElement(t, u));
-    save();
-
-    title.value = ""; url.value = "";
-    renderControls();
-};
-
-// Undo
-undoBtn.onclick = () => {
-    if(!undoStack.length) return alert("Nichts zum Wiederherstellen");
-    const { title, url } = undoStack.pop();
-    linksData.push({ title, url });
-    linksDiv.appendChild(createLinkElement(title, url));
-    save();
-    renderControls();
-};
-
-// Initial
-loadLinks();
+// Start erst wenn DOM bereit ist (Verhindert Layout-Fehler)
+document.addEventListener("DOMContentLoaded", init);
 </script>
 
 </body>
