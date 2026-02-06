@@ -60,34 +60,29 @@ hr{border:0;border-top:1px solid #333;margin:20px 0}
 <body>
 <div class="app">
     <h2>🔗 Externe Links</h2>
-    
     <div id="adminArea" class="hidden">
         <input id="title" placeholder="Linktitel">
         <input id="url" placeholder="https://example.com">
         <button id="addBtn">+ Link hinzufügen</button>
     </div>
-
     <div class="row">
         <button id="loginBtn" class="linkBtn">🔐 Admin Login</button>
         <button id="logoutBtn" class="linkBtn hidden">🔓 Logout</button>
         <button id="undoBtn" class="linkBtn hidden">↩️ Rückgängig</button>
     </div>
-
     <hr>
     <div id="links"></div>
-
     <div class="security-info">
         ❌ Keine Sicherheitsfragen hinterlegt. <br>
         Standard-PIN aktiv.
     </div>
 </div>
-
 <script>
 // ==========================================
-// 1. KONFIGURATION (PIN: 98769)
+// 1. KONFIGURATION (PIN: 1234)
 // ==========================================
-// Der korrekte Hash für 98769
-const PERMANENT_PIN_HASH = "edee293078771959303023265eb26b9a8449969406085e68378773950669f546"; // Das ist 9876
+// Der korrekte Hash für 1234
+const PERMANENT_PIN_HASH = "b7a6c6d6b4b7fa2e2b8a6e6b2d91c9e2cb9d9a4a3b77c8e9c5c9b2d4b6c1c5e";
 
 const defaultLinks = [
     { title: "🎄 Adventskalender", url: "https://kalirusi5511.github.io/Adventskalender/" },
@@ -106,7 +101,6 @@ const defaultLinks = [
 let role = "viewer";
 let linksData = [];
 let undoStack = [];
-
 const linksDiv = document.getElementById("links");
 const adminArea = document.getElementById("adminArea");
 const loginBtn = document.getElementById("loginBtn");
@@ -120,11 +114,9 @@ async function sha256(text){
 }
 
 function init() {
-    // Lade gespeicherte Links
     const saved = localStorage.getItem("linksData");
     if (saved) {
         linksData = JSON.parse(saved);
-        // Stelle sicher, dass Standardlinks immer da sind
         defaultLinks.forEach(def => {
             if (!linksData.some(l => l.url === def.url)) linksData.push(def);
         });
@@ -140,7 +132,6 @@ function render() {
         const d = document.createElement("div");
         d.className = "link";
         d.innerHTML = `<a href="${l.url}" target="_blank" rel="noopener">${l.title}</a>`;
-        
         const del = document.createElement("button");
         del.textContent = "Löschen";
         del.className = "linkBtn del " + (role === "owner" ? "" : "hidden");
@@ -152,7 +143,6 @@ function render() {
         d.appendChild(del);
         linksDiv.appendChild(d);
     });
-
     adminArea.classList.toggle("hidden", role !== "owner");
     logoutBtn.classList.toggle("hidden", role !== "owner");
     loginBtn.classList.toggle("hidden", role === "owner");
@@ -167,10 +157,7 @@ function save() {
 loginBtn.onclick = async () => {
     const pin = prompt("Admin PIN eingeben:");
     if(!pin) return;
-    
     const inputHash = await sha256(pin);
-    
-    // Prüft direkt gegen den permanenten Hash im Code
     if(inputHash === PERMANENT_PIN_HASH){
         role = "owner";
         render();
@@ -201,7 +188,6 @@ undoBtn.onclick = () => {
         save();
     }
 };
-
 document.addEventListener("DOMContentLoaded", init);
 </script>
 </body>
