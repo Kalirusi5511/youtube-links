@@ -59,7 +59,6 @@ hr{border:0;border-top:1px solid #333;margin:20px 0}
 
 #securityPanel { background: #111; padding: 10px; border: 1px dashed #444; border-radius: 10px; margin-top: 10px; }
 
-/* Responsive */
 @media (max-width: 400px) {
     .link{flex-direction: column; align-items: flex-start;}
     .del{margin-top: 10px; width: 100%;}
@@ -70,7 +69,6 @@ hr{border:0;border-top:1px solid #333;margin:20px 0}
 <div class="app">
     <h2>🔗 Externe Links</h2>
     
-    <!-- Admin Bereich -->
     <div id="adminArea" class="hidden">
         <input id="title" placeholder="Linktitel">
         <input id="url" placeholder="https://example.com">
@@ -95,11 +93,10 @@ hr{border:0;border-top:1px solid #333;margin:20px 0}
 
 <script>
 // ==========================================
-// 1. KONFIGURATION (Hier fest im Code)
+// 1. KONFIGURATION (PIN: 55668)
 // ==========================================
-
-// Aktueller PIN: 5564
-const DEFAULT_PIN_HASH = "dbff5341acad5e2a58db4efd5e72e2d9a0a843a28e02b1183c68162d0a3a3de6";
+// Dies ist der fest hinterlegte Hash für 55668
+const DEFAULT_PIN_HASH = "8677c385f096700169121a884869811566373078a631f46323d9b047530e791f";
 
 const defaultLinks = [
     { title: "🎄 Adventskalender", url: "https://kalirusi5511.github.io/Adventskalender/" },
@@ -113,7 +110,7 @@ const defaultLinks = [
 ];
 
 // ==========================================
-// 2. LOGIK (Optimiert für Desktop/Mobil)
+// 2. LOGIK
 // ==========================================
 
 let role = "viewer";
@@ -127,19 +124,20 @@ const logoutBtn = document.getElementById("logoutBtn");
 const undoBtn = document.getElementById("undoBtn");
 const forgotBtn = document.getElementById("forgotBtn");
 
-// Hash-Funktion
+// Hash-Funktion (SHA-256)
 async function sha256(text){
     const enc = new TextEncoder().encode(text);
     const buf = await crypto.subtle.digest("SHA-256", enc);
     return [...new Uint8Array(buf)].map(b=>b.toString(16).padStart(2,"0")).join("");
 }
 
-// Holt den PIN (entweder aus dem Speicher oder den festen aus dem Code)
 function getValidHash() {
+    // Bevorzugt customPinHash aus dem Speicher, falls vorhanden.
+    // Wenn gelöscht wird, greift automatisch wieder der DEFAULT_PIN_HASH (55668).
     return localStorage.getItem("customPinHash") || DEFAULT_PIN_HASH;
 }
 
-// Sicherheitsfragen
+// Sicherheitsfragen einrichten
 document.getElementById("setupSecurityBtn").onclick = () => {
     const q1 = prompt("Frage 1 (z.B. Geburtsort):");
     const a1 = prompt("Antwort 1:");
@@ -155,14 +153,14 @@ document.getElementById("setupSecurityBtn").onclick = () => {
             q3, a3: a3.toLowerCase().trim() 
         };
         localStorage.setItem("ownerSecurity", JSON.stringify(security));
-        alert("✅ Sicherheitsfragen im Browser gespeichert!");
+        alert("✅ Sicherheitsfragen gespeichert!");
     }
 };
 
-// PIN vergessen Logik
+// PIN vergessen?
 forgotBtn.onclick = async () => {
     const stored = localStorage.getItem("ownerSecurity");
-    if(!stored) return alert("❌ Keine Sicherheitsfragen hinterlegt. Bitte logge dich mit dem Standard-PIN ein.");
+    if(!stored) return alert("❌ Keine Sicherheitsfragen hinterlegt. Nutze den Standard-PIN: 55668");
 
     const sec = JSON.parse(stored);
     const ans1 = prompt(sec.q1);
@@ -173,18 +171,17 @@ forgotBtn.onclick = async () => {
        ans2?.toLowerCase().trim() === sec.a2 && 
        ans3?.toLowerCase().trim() === sec.a3) {
         
-        const newPin = prompt("Identität bestätigt! Gib deinen NEUEN PIN ein:");
+        const newPin = prompt("Identität bestätigt! Neuen PIN eingeben:");
         if(newPin && newPin.length >= 4) {
             const newHash = await sha256(newPin);
             localStorage.setItem("customPinHash", newHash);
-            alert("✅ Neuer PIN aktiviert! Er gilt, bis du die Browserdaten löschst. (Danach gilt wieder der PIN im Code)");
+            alert("✅ PIN erfolgreich geändert!");
         }
     } else {
         alert("❌ Antworten falsch.");
     }
 };
 
-// Initialisierung
 function init() {
     if (localStorage.getItem("linksData")) {
         linksData = JSON.parse(localStorage.getItem("linksData"));
@@ -235,10 +232,15 @@ loginBtn.onclick = async () => {
     if(hash === getValidHash()){
         role = "owner";
         render();
-    } else { alert("❌ PIN falsch."); }
+    } else {
+        alert("❌ PIN falsch.");
+    }
 };
 
-logoutBtn.onclick = () => { role = "viewer"; render(); };
+logoutBtn.onclick = () => {
+    role = "viewer";
+    render();
+};
 
 document.getElementById("addBtn").onclick = () => {
     const t = document.getElementById("title").value.trim();
