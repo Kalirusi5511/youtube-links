@@ -1,1 +1,1 @@
-Hier dürft ihr gerne die Youtube Links auf der Website die ich auf meinem Youtube Kanal gepostet habe, vorbeischauen was noch kommt
+Diese Seite enthält meine Projekte, Social-Media-Links sowie weitere relevante Informationen.
