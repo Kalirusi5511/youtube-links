@@ -1,49 +1,52 @@
 const express = require("express");
 const session = require("express-session");
+const bodyParser = require("body-parser");
 const bcrypt = require("bcrypt");
+const path = require("path");
 
 const app = express();
-app.use(express.urlencoded({ extended: true }));
-app.use(express.json());
+const PORT = process.env.PORT || 3000;
 
+// === Passwort-Hash (aus hash.js generiert) ===
+const ADMIN_HASH = "$2b$10$E9v2YxZ..."; // Hier den generierten Hash eintragen
+
+// === Middleware ===
+app.use(bodyParser.urlencoded({ extended: true }));
 app.use(session({
-    secret: "supersecret",
+    secret: "geheimesessionkey",
     resave: false,
-    saveUninitialized: false
+    saveUninitialized: true
 }));
 
-// 👇 Passwort hier ändern
-const ADMIN_PASSWORD_HASH = bcrypt.hashSync("5402", 10);
+// Statisches Frontend
+app.use(express.static(path.join(__dirname, "public")));
 
-app.get("/", (req, res) => {
-    if (req.session.loggedIn) {
-        res.send("<h1>Admin Bereich</h1><a href='/logout'>Logout</a>");
-    } else {
-        res.send(`
-            <form method="POST" action="/login">
-                <input type="password" name="password" placeholder="Passwort" />
-                <button type="submit">Login</button>
-            </form>
-        `);
-    }
-});
-
+// === Login Endpoint ===
 app.post("/login", async (req, res) => {
     const { password } = req.body;
-    const match = await bcrypt.compare(password, ADMIN_PASSWORD_HASH);
+    if (!password) return res.send("❌ Kein Passwort eingegeben");
+
+    const match = await bcrypt.compare(password, ADMIN_HASH);
     if (match) {
-        req.session.loggedIn = true;
-        res.redirect("/");
+        req.session.admin = true;
+        res.redirect("/"); // zurück zur Frontend-Seite
     } else {
         res.send("❌ Falsches Passwort");
     }
 });
 
+// === Logout ===
 app.get("/logout", (req, res) => {
     req.session.destroy(() => {
         res.redirect("/");
     });
 });
 
-const PORT = process.env.PORT || 3000;
-app.listen(PORT, () => console.log("Server läuft auf Port " + PORT));
+// === Admin-Status prüfen ===
+app.get("/isAdmin", (req, res) => {
+    res.json({ isAdmin: !!req.session.admin });
+});
+
+app.listen(PORT, () => {
+    console.log(`🚀 Server läuft auf Port ${PORT}`);
+});
