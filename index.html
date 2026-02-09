@@ -2,52 +2,118 @@
 <html lang="de">
 <head>
 <meta charset="UTF-8">
-<title>🔗 Externe Links | Projekt-Übersicht</title>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>🔗 Externe Links</title>
 
 <style>
-*{box-sizing:border-box}
-body{
-    font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
-    background:#0f0f0f;
-    color:#fff;
-    margin:0;
-    padding:20px;
-    display:flex;
-    justify-content:center;
+* {
+    box-sizing: border-box;
 }
-.app{width:100%;max-width:520px}
-h2{text-align:center}
 
-input,button{
-    width:100%;
-    padding:14px;
-    margin:8px 0;
-    border-radius:10px;
-    border:none;
-    font-size:15px;
+html, body {
+    margin: 0;
+    padding: 0;
+    width: 100%;
+    min-height: 100vh;
+    font-family: 'Segoe UI', Roboto, sans-serif;
+    background: #0f0f0f;
+    color: #fff;
 }
-input{background:#222;color:#fff;border:1px solid #333}
-button{cursor:pointer;font-weight:bold}
-#addBtn{background:#38bdf8;color:#000}
-.row{display:flex;gap:10px;flex-wrap:wrap}
-.linkBtn{background:#333;color:#fff;border-radius:8px}
-.link{
-    background:#1a1a1a;
-    padding:15px;
-    border-radius:12px;
-    margin-bottom:10px;
-    display:flex;
-    justify-content:space-between;
-    align-items:center;
+
+/* Container */
+.app {
+    width: 100%;
+    padding: 15px;
 }
-a{color:#3ea6ff;text-decoration:none;flex:1}
-.del{background:#442222;color:#ff6666;padding:6px 10px;border-radius:6px}
-.hidden{display:none}
+
+/* Titel */
+h2 {
+    text-align: center;
+    font-size: 22px;
+    margin-bottom: 20px;
+}
+
+/* Inputs & Buttons */
+input, button {
+    width: 100%;
+    padding: 16px;
+    margin: 10px 0;
+    border-radius: 12px;
+    border: none;
+    font-size: 16px;
+}
+
+input {
+    background: #222;
+    color: #fff;
+    border: 1px solid #333;
+}
+
+button {
+    cursor: pointer;
+    font-weight: bold;
+}
+
+#addBtn {
+    background: #38bdf8;
+    color: #000;
+}
+
+.linkBtn {
+    background: #333;
+    color: #fff;
+    border-radius: 10px;
+}
+
+/* Link Karten */
+.link {
+    background: #1a1a1a;
+    padding: 16px;
+    border-radius: 14px;
+    margin-bottom: 12px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.link a {
+    color: #3ea6ff;
+    text-decoration: none;
+    font-size: 16px;
+    word-break: break-word;
+}
+
+.del {
+    background: #442222;
+    color: #ff6666;
+    padding: 8px 12px;
+    border-radius: 8px;
+    margin-left: 10px;
+}
+
+.hidden {
+    display: none;
+}
+
+/* Mobile Optimierung */
+@media (max-width: 480px) {
+    .link {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 10px;
+    }
+
+    .del {
+        width: 100%;
+        text-align: center;
+        margin-left: 0;
+    }
+}
 </style>
 </head>
 
 <body>
+
 <div class="app">
     <h2>🔗 Externe Links</h2>
 
@@ -57,27 +123,20 @@ a{color:#3ea6ff;text-decoration:none;flex:1}
         <button id="addBtn">+ Link hinzufügen</button>
     </div>
 
-    <div class="row">
-        <button id="loginBtn" class="linkBtn">🔐 Admin Login</button>
-        <button id="logoutBtn" class="linkBtn hidden">🔓 Logout</button>
-        <button id="undoBtn" class="linkBtn hidden">↩️ Rückgängig</button>
-    </div>
+    <button id="loginBtn" class="linkBtn">🔐 Admin Login</button>
+    <button id="logoutBtn" class="linkBtn hidden">🔓 Logout</button>
+    <button id="undoBtn" class="linkBtn hidden">↩️ Rückgängig</button>
 
-    <hr>
+    <hr style="border-color:#222; margin:20px 0;">
+
     <div id="links"></div>
 </div>
 
 <script>
-// ==========================================
-// KONFIGURATION
-// ==========================================
 
-// 👉 HIER PIN ÄNDERN
+// 🔐 ADMIN PIN (hier ändern wenn du willst)
 const ADMIN_PIN = "5402";
 
-// ==========================================
-// STANDARD LINKS
-// ==========================================
 const defaultLinks = [
     { title: "🎄 Adventskalender", url: "https://kalirusi5511.github.io/Adventskalender/" },
     { title: "🛒 Mein Markt Plugin Projekt", url: "https://kalirusi5511.github.io/Mein-Markt-Plugin-Projekt/" },
@@ -85,13 +144,9 @@ const defaultLinks = [
     { title: "🎮 Discord Server", url: "https://discord.gg/NQ2rjRQE" }
 ];
 
-// ==========================================
-// VARIABLEN
-// ==========================================
 let role = "viewer";
 let linksData = [];
 let undoStack = [];
-let PIN_HASH = null;
 
 const linksDiv = document.getElementById("links");
 const adminArea = document.getElementById("adminArea");
@@ -99,33 +154,15 @@ const loginBtn = document.getElementById("loginBtn");
 const logoutBtn = document.getElementById("logoutBtn");
 const undoBtn = document.getElementById("undoBtn");
 
-// ==========================================
-// HASH FUNKTION
-// ==========================================
-async function sha256(text){
-    const data = new TextEncoder().encode(text);
-    const hash = await crypto.subtle.digest("SHA-256", data);
-    return [...new Uint8Array(hash)]
-        .map(b => b.toString(16).padStart(2, "0"))
-        .join("");
-}
-
-// ==========================================
-// INIT
-// ==========================================
-async function init(){
-    PIN_HASH = await sha256(ADMIN_PIN);
-
+function init(){
     const saved = localStorage.getItem("linksData");
     linksData = saved ? JSON.parse(saved) : [...defaultLinks];
     render();
 }
 
-// ==========================================
-// RENDER
-// ==========================================
 function render(){
     linksDiv.innerHTML = "";
+
     linksData.forEach((l, i) => {
         const div = document.createElement("div");
         div.className = "link";
@@ -143,6 +180,7 @@ function render(){
             };
             div.appendChild(del);
         }
+
         linksDiv.appendChild(div);
     });
 
@@ -157,15 +195,9 @@ function save(){
     render();
 }
 
-// ==========================================
-// EVENTS
-// ==========================================
-loginBtn.onclick = async () => {
+loginBtn.onclick = () => {
     const pin = prompt("Admin PIN eingeben:");
-    if(!pin) return;
-
-    const hash = await sha256(pin);
-    if(hash === PIN_HASH){
+    if(pin === ADMIN_PIN){
         role = "owner";
         render();
     } else {
@@ -179,12 +211,13 @@ logoutBtn.onclick = () => {
 };
 
 document.getElementById("addBtn").onclick = () => {
-    const t = title.value.trim();
-    const u = url.value.trim();
+    const t = document.getElementById("title").value.trim();
+    const u = document.getElementById("url").value.trim();
+
     if(t && u){
         linksData.push({title:t, url:u});
-        title.value = "";
-        url.value = "";
+        document.getElementById("title").value = "";
+        document.getElementById("url").value = "";
         save();
     }
 };
@@ -197,6 +230,8 @@ undoBtn.onclick = () => {
 };
 
 document.addEventListener("DOMContentLoaded", init);
+
 </script>
+
 </body>
 </html>
