@@ -111,8 +111,11 @@ button {
     <div id="links"></div>
 </div>
 <script>
-// 🔐 ADMIN PIN (hier ändern wenn du willst)
-const ADMIN_PIN = "5422";
+// 🔐 ADMIN PIN - SHA-256 HASH
+// Passwort ist NICHT mehr im Klartext sichtbar!
+// Um den PIN zu ändern: Hash generieren und hier einsetzen
+const ADMIN_PIN_HASH = "e084d7507dab6604894c203b3834cd7ce8f16385daeae56e202cd9e930f788d2";
+
 const defaultLinks = [
     { title: "🎄 Adventskalender", url: "https://kalirusi5511.github.io/Adventskalender/" },
     { title: "🛒 Mein Markt Plugin Projekt", url: "https://kalirusi5511.github.io/Mein-Markt-Plugin-Projekt/" },
@@ -120,14 +123,25 @@ const defaultLinks = [
     { title: "🎮 Discord Server", url: "https://discord.gg/NQ2rjRQE" },
     { title: "🎮 World-Plugin", url: "https://github.com/Kalirusi5511/World-Plugin" }
 ];
+
 let role = "viewer";
 let linksData = [];
 let undoStack = [];
+
 const linksDiv = document.getElementById("links");
 const adminArea = document.getElementById("adminArea");
 const loginBtn = document.getElementById("loginBtn");
 const logoutBtn = document.getElementById("logoutBtn");
 const undoBtn = document.getElementById("undoBtn");
+
+// 🔐 SHA-256 Hashing Funktion
+async function hashPin(pin) {
+    const encoder = new TextEncoder();
+    const data = encoder.encode(pin);
+    const hashBuffer = await crypto.subtle.digest('SHA-256', data);
+    const hashArray = Array.from(new Uint8Array(hashBuffer));
+    return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+}
 
 function isValidUrl(url) {
     try {
@@ -138,7 +152,7 @@ function isValidUrl(url) {
     }
 }
 
-function init(){
+async function init(){
     const saved = localStorage.getItem("linksData");
     linksData = saved ? JSON.parse(saved) : [...defaultLinks];
     render();
@@ -174,13 +188,20 @@ function save(){
     render();
 }
 
-loginBtn.onclick = () => {
+loginBtn.onclick = async () => {
     const pin = prompt("Admin PIN eingeben:");
-    if(pin === ADMIN_PIN){
+    if(!pin) {
+        alert("❌ Bitte PIN eingeben");
+        return;
+    }
+    
+    // Vergleiche Hash statt Klartext
+    const inputHash = await hashPin(pin);
+    if(inputHash === ADMIN_PIN_HASH){
         role = "owner";
         render();
     } else {
-        alert("❌ PIN falsch oder leer");
+        alert("❌ PIN falsch");
     }
 };
 
