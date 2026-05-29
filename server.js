@@ -1,5 +1,12 @@
-// server.js
-require('dotenv').config(); // nur lokal / bei Bedarf
+// server.js (vollständig)
+try {
+  if (process.env.NODE_ENV !== 'production') {
+    require('dotenv').config();
+  }
+} catch (e) {
+  // ignore
+}
+
 const express = require('express');
 const session = require('express-session');
 const rateLimit = require('express-rate-limit');
@@ -8,50 +15,43 @@ const path = require('path');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
-const ADMIN_HASH = process.env.ADMIN_HASH;         // bcrypt hash z.B. $2b$10$...
-const SESSION_SECRET = process.env.SESSION_SECRET; // langes zufälliges Secret
+const ADMIN_HASH = process.env.ADMIN_HASH;
+const SESSION_SECRET = process.env.SESSION_SECRET || 'dev-secret-please-change';
 const IN_PROD = process.env.NODE_ENV === 'production';
 
-// Middleware
 app.use(express.urlencoded({ extended: true }));
 app.use(express.json());
 
-// Einfaches Rate Limit für /login (Schutz vor Brute Force)
 const loginLimiter = rateLimit({
-  windowMs: 15 * 60 * 1000, // 15 Minuten
-  max: 6,                   // max 6 Versuche pro IP pro window
+  windowMs: 15 * 60 * 1000,
+  max: 6,
   message: 'Zu viele Login‑Versuche. Bitte später erneut versuchen.'
 });
 app.use('/login', loginLimiter);
 
-// Session (für Produktion bitte persistenten Store verwenden)
 app.use(session({
   name: 'sid',
-  secret: SESSION_SECRET || 'dev-secret-please-change',
+  secret: SESSION_SECRET,
   resave: false,
   saveUninitialized: false,
   cookie: {
     httpOnly: true,
-    secure: IN_PROD,        // nur über HTTPS
+    secure: IN_PROD,
     sameSite: 'lax',
-    maxAge: 1000 * 60 * 60 * 2 // 2 Stunden
+    maxAge: 1000 * 60 * 60 * 2
   }
 }));
 
-// Statische Dateien (index.html in /public)
 const publicPath = path.join(__dirname, 'public');
 app.use(express.static(publicPath));
 
-// Login-Endpoint
 app.post('/login', async (req, res) => {
   const { password } = req.body;
   if (!password) return res.status(400).send('❌ Kein Passwort eingegeben');
-
   if (!ADMIN_HASH) {
-    console.error('ADMIN_HASH fehlt in den ENV variablen');
+    console.error('ADMIN_HASH fehlt in ENV');
     return res.status(500).send('Serverkonfiguration fehlerhaft');
   }
-
   try {
     const match = await bcrypt.compare(password, ADMIN_HASH);
     if (match) {
@@ -66,21 +66,17 @@ app.post('/login', async (req, res) => {
   }
 });
 
-// Logout
 app.get('/logout', (req, res) => {
   req.session.destroy(() => res.redirect('/'));
 });
 
-// Admin-Status prüfen
 app.get('/isAdmin', (req, res) => {
   res.json({ isAdmin: !!req.session.admin });
 });
 
-// Für SPAs: alle unbekannten GETs auf index.html
+// Für SPA: alle nicht gefundenen GETs auf index.html
 app.get('*', (req, res) => {
   res.sendFile(path.join(publicPath, 'index.html'));
 });
 
-app.listen(PORT, () => {
-  console.log(`🚀 Server läuft auf Port ${PORT}`);
-});
+app.listen(PORT, () => console.log(`🚀 Server läuft auf Port ${PORT}`));
