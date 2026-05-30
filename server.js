@@ -21,9 +21,21 @@ let db;
 async function initDatabase() {
   const initSqlJs = require('sql.js');
   
+  // WICHTIG: Lokale WASM Datei verwenden!
+  const wasmPath = path.join(__dirname, 'node_modules', 'sql.js', 'dist', 'sql-wasm.wasm');
+  
+  // Prüfe ob WASM Datei existiert
+  if (!fs.existsSync(wasmPath)) {
+    console.error('❌ WASM Datei nicht gefunden:', wasmPath);
+    process.exit(1);
+  }
+
   const SQL = await initSqlJs({
-    locateFile: file => `https://sql.js.org/dist/${file}`
+    // Pfad zur lokalen WASM Datei
+    locateFile: file => wasmPath
   });
+
+  console.log('✅ SQL.js geladen');
 
   // Datenbank laden oder neue erstellen
   const dbFile = 'database.db';
@@ -31,8 +43,10 @@ async function initDatabase() {
   if (fs.existsSync(dbFile)) {
     const buffer = fs.readFileSync(dbFile);
     db = new SQL.Database(buffer);
+    console.log('✅ Bestehende Datenbank geladen');
   } else {
     db = new SQL.Database();
+    console.log('✅ Neue Datenbank erstellt');
   }
 
   // Tabellen erstellen
@@ -67,21 +81,22 @@ async function initDatabase() {
 
   // Admin User erstellen (falls nicht vorhanden)
   const existingAdmin = db.exec("SELECT * FROM users WHERE email = 'admin@example.com'");
-  if (existingAdmin.length === 0) {
-    const hashedPassword = crypto.createHash('sha256').update('admin123').digest('hex');
+  if (existingAdmin.length === 0 || existingAdmin[0].values.length === 0) {
+    const hashedPassword = hashToken('admin123');
     db.run("INSERT INTO users (email, password_hash) VALUES (?, ?)", ['admin@example.com', hashedPassword]);
     console.log('✅ Admin User erstellt: admin@example.com / admin123');
   }
 
   saveDatabase();
-  console.log('✅ Datenbank initialisiert');
 }
 
 // Datenbank speichern
 function saveDatabase() {
-  const data = db.export();
-  const buffer = Buffer.from(data);
-  fs.writeFileSync('database.db', buffer);
+  if (db) {
+    const data = db.export();
+    const buffer = Buffer.from(data);
+    fs.writeFileSync('database.db', buffer);
+  }
 }
 
 // ---------- HILFSFUNKTIONEN ----------
@@ -117,7 +132,9 @@ app.use(express.static(staticDir));
 // ==================== API ROUTES ====================
 
 // --- HEALTH CHECK ---
-app.get('/api/health', (req, res) => res.json({ ok: true, database: !!db }));
+app.get('/api/health', (req, res) => {
+  res.json({ ok: true, database: !!db });
+});
 
 // --- LOGIN ---
 app.post('/api/auth/login', (req, res) => {
@@ -213,11 +230,10 @@ app.post('/api/auth/verify-backup-code', (req, res) => {
   }
 
   const userId = userResult[0].values[0][0];
-  const hashedCode = hashCode(code);
 
   const validCodeResult = db.exec(
     "SELECT * FROM backup_codes WHERE user_id = ? AND code = ? AND used = 0",
-    [userId, hashedCode]
+    [userId, hashCode(code)]
   );
 
   if (validCodeResult.length === 0 || validCodeResult[0].values.length === 0) {
@@ -232,7 +248,6 @@ app.post('/api/auth/verify-backup-code', (req, res) => {
 
   const resetToken = generateResetToken();
 
-  // Reset-Token speichern (1 Stunde gültig)
   const expiresAt = new Date(Date.now() + 3600000).toISOString();
   db.run("INSERT INTO reset_tokens (user_id, token, expires_at) VALUES (?, ?, ?)", [userId, hashToken(resetToken), expiresAt]);
   saveDatabase();
@@ -294,18 +309,17 @@ app.get('*', (req, res) => res.sendFile(path.join(staticDir, 'index.html')));
 async function start() {
   await initDatabase();
   
-  // Session middleware (nach DB init)
   const session = require('express-session');
   app.use(session({
-    secret: process.env.SESSION_SECRET || 'super-geheimes-secret',
+    secret: process.env.SESSION_SECRET || 'super-geheimes-secret-2024',
     resave: false,
     saveUninitialized: false,
-    cookie: { maxAge: 24 * 60 * 60 * 1000 } // 24 Stunden
+    cookie: { maxAge: 24 * 60 * 60 * 1000 }
   }));
 
   app.listen(PORT, () => {
-    console.log(`Server läuft auf Port ${PORT}`);
-    console.log(`DB Datei: database.db`);
+    console.log(`🚀 Server läuft auf Port ${PORT}`);
+    console.log(`📁 Statische Dateien: ${staticDir}`);
   });
 }
 
