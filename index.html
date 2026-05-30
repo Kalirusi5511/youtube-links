@@ -1,0 +1,236 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>🔗 Externe Links</title>
+<style>
+* {
+    box-sizing: border-box;
+}
+html, body {
+    margin: 0;
+    padding: 0;
+    width: 100%;
+    min-height: 100vh;
+    font-family: 'Segoe UI', Roboto, sans-serif;
+    background: #0f0f0f;
+    color: #fff;
+}
+/* Container */
+.app {
+    width: 100%;
+    padding: 15px;
+}
+/* Titel */
+h2 {
+    text-align: center;
+    font-size: 22px;
+    margin-bottom: 20px;
+}
+/* Inputs & Buttons */
+input, button {
+    width: 100%;
+    padding: 16px;
+    margin: 10px 0;
+    border-radius: 12px;
+    border: none;
+    font-size: 16px;
+}
+input {
+    background: #222;
+    color: #fff;
+    border: 1px solid #333;
+}
+button {
+    cursor: pointer;
+    font-weight: bold;
+}
+#addBtn {
+    background: #38bdf8;
+    color: #000;
+}
+.linkBtn {
+    background: #333;
+    color: #fff;
+    border-radius: 10px;
+}
+/* Link Karten */
+.link {
+    background: #1a1a1a;
+    padding: 16px;
+    border-radius: 14px;
+    margin-bottom: 12px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+.link a {
+    color: #3ea6ff;
+    text-decoration: none;
+    font-size: 16px;
+    word-break: break-word;
+}
+.del {
+    background: #442222;
+    color: #ff6666;
+    padding: 8px 12px;
+    border-radius: 8px;
+    margin-left: 10px;
+}
+.hidden {
+    display: none;
+}
+/* Mobile Optimierung */
+@media (max-width: 480px) {
+    .link {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 10px;
+    }
+    .del {
+        width: 100%;
+        text-align: center;
+        margin-left: 0;
+    }
+}
+</style>
+</head>
+<body>
+<div class="app">
+    <h2>🔗 Externe Links</h2>
+    <div id="adminArea" class="hidden">
+        <input id="title" placeholder="Linktitel">
+        <input id="url" placeholder="https://example.com">
+        <button id="addBtn">+ Link hinzufügen</button>
+    </div>
+    <button id="loginBtn" class="linkBtn">🔐 Admin Login</button>
+    <button id="logoutBtn" class="linkBtn hidden">🔓 Logout</button>
+    <button id="undoBtn" class="linkBtn hidden">↩️ Rückgängig</button>
+    <hr style="border-color:#222; margin:20px 0;">
+    <div id="links"></div>
+</div>
+<script>
+// 🔐 ADMIN PIN - SHA-256 HASH
+// Passwort ist NICHT mehr im Klartext sichtbar!
+// Um den PIN zu ändern: Hash generieren und hier einsetzen
+const ADMIN_PIN_HASH = "e084d7507dab6604894c203b3834cd7ce8f16385daeae56e202cd9e930f788d2";
+
+const defaultLinks = [
+    { title: "🎄 Adventskalender", url: "https://kalirusi5511.github.io/Adventskalender/" },
+    { title: "🛒 Mein Markt Plugin Projekt", url: "https://kalirusi5511.github.io/Mein-Markt-Plugin-Projekt/" },
+    { title: "📢 WhatsApp Channel", url: "https://whatsapp.com/channel/0029Vb62Zu4DTkK6HVAfJZ39" },
+    { title: "🎮 Discord Server", url: "https://discord.gg/NQ2rjRQE" },
+    { title: "🎮 World-Plugin", url: "https://github.com/Kalirusi5511/World-Plugin" }
+];
+
+let role = "viewer";
+let linksData = [];
+let undoStack = [];
+
+const linksDiv = document.getElementById("links");
+const adminArea = document.getElementById("adminArea");
+const loginBtn = document.getElementById("loginBtn");
+const logoutBtn = document.getElementById("logoutBtn");
+const undoBtn = document.getElementById("undoBtn");
+
+// 🔐 SHA-256 Hashing Funktion
+async function hashPin(pin) {
+    const encoder = new TextEncoder();
+    const data = encoder.encode(pin);
+    const hashBuffer = await crypto.subtle.digest('SHA-256', data);
+    const hashArray = Array.from(new Uint8Array(hashBuffer));
+    return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+}
+
+function isValidUrl(url) {
+    try {
+        new URL(url);
+        return true;
+    } catch (e) {
+        return false;
+    }
+}
+
+async function init(){
+    const saved = localStorage.getItem("linksData");
+    linksData = saved ? JSON.parse(saved) : [...defaultLinks];
+    render();
+}
+
+function render(){
+    linksDiv.innerHTML = "";
+    linksData.forEach((l, i) => {
+        const div = document.createElement("div");
+        div.className = "link";
+        div.innerHTML = `<a href="${l.url}" target="_blank">${l.title}</a>`;
+        if(role === "owner"){
+            const del = document.createElement("button");
+            del.textContent = "Löschen";
+            del.className = "del";
+            del.onclick = () => {
+                undoStack.push(linksData[i]);
+                linksData = linksData.filter((_, index) => index !== i);
+                save();
+            };
+            div.appendChild(del);
+        }
+        linksDiv.appendChild(div);
+    });
+    adminArea.classList.toggle("hidden", role !== "owner");
+    loginBtn.classList.toggle("hidden", role === "owner");
+    logoutBtn.classList.toggle("hidden", role !== "owner");
+    undoBtn.classList.toggle("hidden", undoStack.length === 0 || role !== "owner");
+}
+
+function save(){
+    localStorage.setItem("linksData", JSON.stringify(linksData));
+    render();
+}
+
+loginBtn.onclick = async () => {
+    const pin = prompt("Admin PIN eingeben:");
+    if(!pin) {
+        alert("❌ Bitte PIN eingeben");
+        return;
+    }
+    
+    // Vergleiche Hash statt Klartext
+    const inputHash = await hashPin(pin);
+    if(inputHash === ADMIN_PIN_HASH){
+        role = "owner";
+        render();
+    } else {
+        alert("❌ PIN falsch");
+    }
+};
+
+logoutBtn.onclick = () => {
+    role = "viewer";
+    render();
+};
+
+document.getElementById("addBtn").onclick = () => {
+    const t = document.getElementById("title").value.trim();
+    const u = document.getElementById("url").value.trim();
+    if(t && u && isValidUrl(u)){
+        linksData.push({title:t, url:u});
+        document.getElementById("title").value = "";
+        document.getElementById("url").value = "";
+        save();
+    } else {
+        alert("❌ Bitte geben Sie einen gültigen Titel und eine gültige URL ein.");
+    }
+};
+
+undoBtn.onclick = () => {
+    if(undoStack.length){
+        linksData.push(undoStack.pop());
+        save();
+    }
+};
+
+document.addEventListener("DOMContentLoaded", init);
+</script>
+</body>
+</html>
