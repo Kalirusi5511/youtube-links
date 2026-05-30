@@ -3,144 +3,366 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>🔗 Externe Links</title>
+<title>🔗 Externe Links - Admin Panel</title>
 <style>
-* {
-    box-sizing: border-box;
-}
+* { box-sizing: border-box; }
 html, body {
-    margin: 0;
-    padding: 0;
-    width: 100%;
-    min-height: 100vh;
+    margin: 0; padding: 0;
+    width: 100%; min-height: 100vh;
     font-family: 'Segoe UI', Roboto, sans-serif;
-    background: #0f0f0f;
-    color: #fff;
+    background: #0f0f0f; color: #fff;
 }
-/* Container */
-.app {
-    width: 100%;
-    padding: 15px;
+.app { width: 100%; padding: 15px; max-width: 700px; margin: 0 auto; }
+h2 { text-align: center; font-size: 22px; margin-bottom: 20px; }
+h3 { color: #3ea6ff; margin-top: 25px; border-bottom: 1px solid #333; padding-bottom: 8px; }
+
+input, button, textarea, select {
+    width: 100%; padding: 14px; margin: 6px 0;
+    border-radius: 10px; border: none; font-size: 15px;
 }
-/* Titel */
-h2 {
-    text-align: center;
-    font-size: 22px;
-    margin-bottom: 20px;
+input, textarea, select {
+    background: #1a1a1a; color: #fff; border: 1px solid #333;
 }
-/* Inputs & Buttons */
-input, button {
-    width: 100%;
-    padding: 16px;
-    margin: 10px 0;
-    border-radius: 12px;
-    border: none;
-    font-size: 16px;
-}
-input {
-    background: #222;
-    color: #fff;
-    border: 1px solid #333;
-}
-button {
-    cursor: pointer;
-    font-weight: bold;
-}
-#addBtn {
-    background: #38bdf8;
-    color: #000;
-}
-.linkBtn {
-    background: #333;
-    color: #fff;
-    border-radius: 10px;
-}
-/* Link Karten */
+textarea { height: 80px; resize: vertical; }
+button { cursor: pointer; font-weight: bold; }
+
+.btn-primary { background: #3ea6ff; color: #000; }
+.btn-secondary { background: #333; color: #fff; }
+.btn-danger { background: #442222; color: #ff6666; }
+.btn-success { background: #1a4422; color: #66ff88; }
+.btn-warning { background: #443322; color: #ffaa44; }
+
 .link {
-    background: #1a1a1a;
-    padding: 16px;
-    border-radius: 14px;
-    margin-bottom: 12px;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
+    background: #1a1a1a; padding: 14px;
+    border-radius: 12px; margin-bottom: 10px;
+    display: flex; justify-content: space-between; align-items: center;
 }
-.link a {
-    color: #3ea6ff;
-    text-decoration: none;
-    font-size: 16px;
-    word-break: break-word;
-}
-.del {
-    background: #442222;
-    color: #ff6666;
-    padding: 8px 12px;
-    border-radius: 8px;
-    margin-left: 10px;
-}
-.hidden {
-    display: none;
-}
-/* Mobile Optimierung */
+.link a { color: #3ea6ff; text-decoration: none; font-size: 15px; word-break: break-all; flex: 1; }
+.del { background: #442222; color: #ff6666; padding: 6px 10px; border-radius: 8px; margin-left: 8px; flex-shrink: 0; }
+
+.hidden { display: none !important; }
+.section { background: #161616; border-radius: 14px; padding: 16px; margin-bottom: 16px; }
+.info-box { background: #1a1a2a; border-left: 4px solid #3ea6ff; padding: 12px; border-radius: 8px; font-size: 13px; }
+.warn-box { background: #2a1a1a; border-left: 4px solid #ff6666; padding: 12px; border-radius: 8px; font-size: 13px; }
+.success-box { background: #1a2a1a; border-left: 4px solid #66ff88; padding: 12px; border-radius: 8px; font-size: 13px; }
+code { background: #222; padding: 2px 6px; border-radius: 4px; color: #38bdf8; font-size: 13px; }
+
+.copy-btn { width: auto; padding: 6px 12px; font-size: 12px; margin-left: 6px; background: #38bdf8; color: #000; }
+.recovery-item { display: flex; justify-content: space-between; align-items: center; padding: 10px; background: #222; border-radius: 8px; margin: 6px 0; }
+.recovery-code { font-family: monospace; color: #38bdf8; letter-spacing: 2px; }
+
+.badge { display: inline-block; padding: 3px 10px; border-radius: 20px; font-size: 12px; margin-right: 6px; }
+.badge-green { background: #1a4422; color: #66ff88; }
+.badge-red { background: #442222; color: #ff6666; }
+.badge-yellow { background: #443322; color: #ffaa44; }
+.badge-blue { background: #1a2244; color: #3ea6ff; }
+
 @media (max-width: 480px) {
-    .link {
-        flex-direction: column;
-        align-items: flex-start;
-        gap: 10px;
-    }
-    .del {
-        width: 100%;
-        text-align: center;
-        margin-left: 0;
-    }
+    .link { flex-direction: column; align-items: flex-start; gap: 8px; }
+    .del { width: 100%; text-align: center; margin-left: 0; }
 }
 </style>
 </head>
 <body>
 <div class="app">
+    <!-- ==================== HEADER ==================== -->
     <h2>🔗 Externe Links</h2>
-    <div id="adminArea" class="hidden">
-        <input id="title" placeholder="Linktitel">
-        <input id="url" placeholder="https://example.com">
-        <button id="addBtn">+ Link hinzufügen</button>
-    </div>
-    <button id="loginBtn" class="linkBtn">🔐 Admin Login</button>
-    <button id="logoutBtn" class="linkBtn hidden">🔓 Logout</button>
-    <button id="undoBtn" class="linkBtn hidden">↩️ Rückgängig</button>
-    <hr style="border-color:#222; margin:20px 0;">
-    <div id="links"></div>
-</div>
-<script>
-// 🔐 ADMIN PIN - SHA-256 HASH
-// Passwort ist NICHT mehr im Klartext sichtbar!
-// Um den PIN zu ändern: Hash generieren und hier einsetzen
-const ADMIN_PIN_HASH = "e084d7507dab6604894c203b3834cd7ce8f16385daeae56e202cd9e930f788d2";
+    <div id="statusBar"></div>
 
+    <!-- ==================== VIEWER BEREICH ==================== -->
+    <div id="viewerArea">
+        <div id="links"></div>
+    </div>
+
+    <hr style="border-color:#222; margin:20px 0;">
+
+    <!-- ==================== AUTH BEREICH ==================== -->
+    <div id="authArea" class="section">
+        <h3 style="margin-top:0">🔐 Anmeldung</h3>
+
+        <!-- Owner Login -->
+        <div id="ownerLoginSection">
+            <p style="font-size:13px; color:#888; margin-bottom:8px;">🏠 Owner Login</p>
+            <input type="password" id="ownerPinInput" placeholder="🔑 Owner PIN eingeben">
+            <button class="btn-primary" onclick="ownerLogin()">Anmelden</button>
+            <button class="btn-warning" onclick="showForgotSection()">🔑 Passwort / PIN vergessen</button>
+        </div>
+
+        <!-- Forgot Password Section -->
+        <div id="forgotSection" class="hidden">
+            <h3 style="color:#ffaa44; margin-top:0;">🔑 PIN zurücksetzen</h3>
+            <div class="warn-box">
+                <strong>⚠️ Wichtig:</strong> Ein Recovery-Code ist ein Einwegcode. 
+                Nach Verwendung wird er ungültig! Es werden <strong>5 Codes</strong> generiert, 
+                bewahren Sie diese sicher auf.
+            </div>
+            <div id="recoveryStep1">
+                <p style="font-size:13px; color:#888;">1. Geben Sie Ihren Backup-Code ein:</p>
+                <input type="password" id="recoveryCodeInput" placeholder="🔒 Recovery Code eingeben">
+                <button class="btn-success" onclick="verifyRecoveryCode()">Code verifizieren</button>
+                <button class="btn-secondary" onclick="hideForgotSection()">↩️ Zurück</button>
+            </div>
+            <div id="recoveryStep2" class="hidden">
+                <p style="font-size:13px; color:#888;">2. Neuen PIN eingeben:</p>
+                <input type="password" id="newPinInput" placeholder="🔑 Neuer PIN (min. 4 Zeichen)">
+                <input type="password" id="confirmPinInput" placeholder="🔑 PIN bestätigen">
+                <button class="btn-success" onclick="resetPinWithRecovery()">PIN zurücksetzen</button>
+            </div>
+        </div>
+
+        <!-- Logout & Undo -->
+        <button id="logoutBtn" class="btn-secondary hidden" onclick="ownerLogout()">🔓 Logout</button>
+        <button id="undoBtn" class="btn-warning hidden" onclick="undoDelete()">↩️ Letzte Löschung rückgängig</button>
+    </div>
+
+    <!-- ==================== ADMIN PANEL ==================== -->
+    <div id="adminArea" class="hidden">
+        <hr style="border-color:#222; margin:20px 0;">
+
+        <!-- Link hinzufügen -->
+        <div class="section">
+            <h3 style="margin-top:0;">➕ Link hinzufügen</h3>
+            <input id="linkTitle" placeholder="Titel (z.B. 🎄 Adventskalender)">
+            <input id="linkUrl" placeholder="https://example.com">
+            <button class="btn-primary" onclick="addLink()">+ Link hinzufügen</button>
+        </div>
+
+        <!-- Recovery Codes verwalten -->
+        <div class="section">
+            <h3 style="margin-top:0;">🔒 Recovery-Codes verwalten</h3>
+            <div class="info-box">
+                <strong>ℹ️ Info:</strong> Recovery-Codes sind Einwegcodes zum Zurücksetzen des PINs. 
+                Jeder Code kann nur <strong>einmal</strong> verwendet werden. 
+                Sie können jederzeit <strong>5 neue Codes generieren</strong> - die alten werden dabei ungültig.
+            </div>
+            <button class="btn-success" onclick="generateRecoveryCodes()">🔄 Neue Recovery-Codes generieren</button>
+            <div id="recoveryCodesList"></div>
+            <div id="recoveryCodesDisplay" class="hidden">
+                <div class="success-box" style="margin-top:10px;">
+                    <strong>✅ Recovery-Codes generiert!</strong><br>
+                    <strong>Bewahren Sie diese Codes sicher auf!</strong><br>
+                    <small style="color:#888;">Nach dem Schließen werden diese nicht mehr angezeigt.</small>
+                </div>
+                <div id="codesContainer"></div>
+            </div>
+        </div>
+
+        <!-- PIN ändern -->
+        <div class="section">
+            <h3 style="margin-top:0;">🔑 PIN ändern</h3>
+            <input type="password" id="currentPinChange" placeholder="Aktueller PIN">
+            <input type="password" id="newPinChange" placeholder="Neuer PIN">
+            <input type="password" id="confirmPinChange" placeholder="Neuer PIN bestätigen">
+            <button class="btn-success" onclick="changePin()">PIN aktualisieren</button>
+        </div>
+
+        <!-- Hash anzeigen -->
+        <div class="section">
+            <h3 style="margin-top:0;">🔍 Hash-Informationen</h3>
+            <div class="warn-box">
+                <strong>⚠️ Sicherheitswarnung:</strong> Der Hash ist ein Fingerabdruck Ihres PINs. 
+                Geben Sie diesen <strong>niemals an Dritte weiter</strong>!
+            </div>
+            <button class="btn-secondary" onclick="showHash()">🔐 Hash anzeigen</button>
+            <div id="hashDisplay" class="hidden">
+                <div class="info-box" style="margin-top:10px;">
+                    <strong>📋 Aktueller PIN-Hash:</strong><br>
+                    <code id="hashValue" style="display:block; margin-top:8px; word-break:break-all; font-size:11px;"></code>
+                    <button class="copy-btn" onclick="copyHash()">📋 Kopieren</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Einstellungen (.env-artig) -->
+        <div class="section">
+            <h3 style="margin-top:0;">⚙️ Einstellungen (config.json)</h3>
+            <div class="info-box">
+                <strong>ℹ️ Diese Einstellungen werden wie eine .env Datei behandelt.</strong>
+            </div>
+            <textarea id="configJson" placeholder='{ "appName": "Externe Links", "ownerName": "Admin", "maxLinks": 100, "allowViewerEdit": false, "theme": "dark" }'></textarea>
+            <button class="btn-primary" onclick="saveConfig()">💾 Konfiguration speichern</button>
+            <button class="btn-secondary" onclick="resetConfig()">🔄 Standard zurücksetzen</button>
+        </div>
+
+        <!-- Backup & Export -->
+        <div class="section">
+            <h3 style="margin-top:0;">💾 Backup & Export</h3>
+            <button class="btn-secondary" onclick="exportData()">📥 Daten exportieren (JSON)</button>
+            <button class="btn-secondary" onclick="showImportSection()">📤 Daten importieren</button>
+            <div id="importSection" class="hidden" style="margin-top:10px;">
+                <textarea id="importData" placeholder="Kopieren Sie hier die exportierten JSON-Daten..."></textarea>
+                <button class="btn-success" onclick="importData()">✅ Importieren</button>
+            </div>
+        </div>
+
+        <!-- Links bearbeiten -->
+        <div class="section">
+            <h3 style="margin-top:0;">✏️ Links bearbeiten</h3>
+            <div id="editLinksList"></div>
+        </div>
+    </div>
+</div>
+
+<script>
+// ===== KONFIGURATION =====
+const DEFAULT_CONFIG = {
+    appName: "🔗 Externe Links",
+    ownerName: "Admin",
+    ownerEmail: "",
+    maxLinks: 100,
+    allowViewerEdit: false,
+    theme: "dark",
+    securityLevel: "high"  // "low" | "medium" | "high"
+};
+
+// ===== MUSTER-DATEN =====
 const defaultLinks = [
     { title: "🎄 Adventskalender", url: "https://kalirusi5511.github.io/Adventskalender/" },
-    { title: "🛒 Mein Markt Plugin Projekt", url: "https://kalirusi5511.github.io/Mein-Markt-Plugin-Projekt/" },
+    { title: "🛒 Mein Markt Plugin Projekt", url: "https://kalirusi5511.github.io/Mein-Markt-Plugin-Start/" },
     { title: "📢 WhatsApp Channel", url: "https://whatsapp.com/channel/0029Vb62Zu4DTkK6HVAfJZ39" },
     { title: "🎮 Discord Server", url: "https://discord.gg/NQ2rjRQE" },
     { title: "🎮 World-Plugin", url: "https://github.com/Kalirusi5511/World-Plugin" }
 ];
 
+const DEFAULT_ADMIN_HASH = "e084d7507dab6604894c203b3834cd7ce8f16385daeae56e202cd9e930f788d2";
+const DEFAULT_ADMIN_PIN = "1234"; // ← HIER DEN START-PIN SETZEN (bitte ändern!)
+
+// ===== STATE =====
 let role = "viewer";
 let linksData = [];
 let undoStack = [];
+let recoveryCodes = [];
+let activeRecoveryCode = null;
+let appConfig = {};
 
+// ===== DOM REFS =====
 const linksDiv = document.getElementById("links");
+const authArea = document.getElementById("authArea");
 const adminArea = document.getElementById("adminArea");
-const loginBtn = document.getElementById("loginBtn");
 const logoutBtn = document.getElementById("logoutBtn");
 const undoBtn = document.getElementById("undoBtn");
+const statusBar = document.getElementById("statusBar");
 
-// 🔐 SHA-256 Hashing Funktion
+// ===== INITIALISIERUNG =====
+async function init() {
+    loadConfig();
+    loadRecoveryCodes();
+    const saved = localStorage.getItem("linksData");
+    linksData = saved ? JSON.parse(saved) : [...defaultLinks];
+    render();
+    updateStatusBar();
+}
+
+// ===== CONFIG MANAGEMENT =====
+function loadConfig() {
+    const saved = localStorage.getItem("appConfig");
+    appConfig = saved ? JSON.parse(saved) : { ...DEFAULT_CONFIG };
+    document.getElementById("configJson").value = JSON.stringify(appConfig, null, 2);
+}
+
+function saveConfig() {
+    try {
+        const input = document.getElementById("configJson").value.trim();
+        const parsed = JSON.parse(input);
+        appConfig = { ...DEFAULT_CONFIG, ...parsed };
+        localStorage.setItem("appConfig", JSON.stringify(appConfig));
+        document.getElementById("configJson").value = JSON.stringify(appConfig, null, 2);
+        showToast("✅ Konfiguration gespeichert!", "success");
+    } catch (e) {
+        showToast("❌ Ungültiges JSON format!", "error");
+    }
+}
+
+function resetConfig() {
+    appConfig = { ...DEFAULT_CONFIG };
+    localStorage.setItem("appConfig", JSON.stringify(appConfig));
+    document.getElementById("configJson").value = JSON.stringify(appConfig, null, 2);
+    showToast("🔄 Konfiguration zurückgesetzt!", "info");
+}
+
+// ===== RECOVERY CODES =====
+function loadRecoveryCodes() {
+    const saved = localStorage.getItem("recoveryCodes");
+    recoveryCodes = saved ? JSON.parse(saved) : [];
+    renderRecoveryCodesList();
+}
+
+function generateRecoveryCodes() {
+    if (recoveryCodes.length > 0) {
+        if (!confirm("⚠️ Es existieren bereits Recovery-Codes. Wenn Sie neue generieren, werden die alten ungültig!\n\nFortfahren?")) {
+            return;
+        }
+    }
+    recoveryCodes = [];
+    for (let i = 0; i < 5; i++) {
+        const code = generateSecureCode(12);
+        recoveryCodes.push({
+            code: code,
+            used: false,
+            createdAt: new Date().toISOString(),
+            usedAt: null
+        });
+    }
+    localStorage.setItem("recoveryCodes", JSON.stringify(recoveryCodes));
+
+    // Anzeigen
+    const container = document.getElementById("codesContainer");
+    container.innerHTML = "";
+    recoveryCodes.forEach((rc, i) => {
+        container.innerHTML += `
+            <div class="recovery-item">
+                <span class="recovery-code">${i + 1}. ${rc.code}</span>
+            </div>
+        `;
+    });
+    document.getElementById("recoveryCodesDisplay").classList.remove("hidden");
+
+    renderRecoveryCodesList();
+    showToast("✅ 5 Recovery-Codes generiert!", "success");
+}
+
+function renderRecoveryCodesList() {
+    const list = document.getElementById("recoveryCodesList");
+    if (recoveryCodes.length === 0) {
+        list.innerHTML = '<div class="warn-box">⚠️ Keine Recovery-Codes vorhanden. Generieren Sie welche!</div>';
+        return;
+    }
+    let html = "<div style='margin-top:10px;'><strong>Verfügbare Codes:</strong><br><br>";
+    recoveryCodes.forEach((rc, i) => {
+        const status = rc.used
+            ? `<span class="badge badge-red">❌ Verwendet am ${new Date(rc.usedAt).toLocaleString('de-DE')}</span>`
+            : `<span class="badge badge-green">✅ Aktiv</span>`;
+        html += `
+            <div class="recovery-item">
+                <span><strong>${i + 1}.</strong> <span class="recovery-code">${rc.used ? '••••••••••••' : rc.code}</span></span>
+                ${status}
+                ${!rc.used ? `<button class="copy-btn" onclick="copyRecoveryCode('${rc.code}')">📋</button>` : ''}
+            </div>
+        `;
+    });
+    html += "</div>";
+    list.innerHTML = html;
+}
+
+// ===== SECURITY =====
 async function hashPin(pin) {
     const encoder = new TextEncoder();
     const data = encoder.encode(pin);
     const hashBuffer = await crypto.subtle.digest('SHA-256', data);
     const hashArray = Array.from(new Uint8Array(hashBuffer));
     return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+}
+
+function generateSecureCode(length) {
+    const chars = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
+    let result = "";
+    const array = new Uint8Array(length);
+    crypto.getRandomValues(array);
+    for (let i = 0; i < length; i++) {
+        result += chars[array[i] % chars.length];
+    }
+    // Format: XXXX-XXXX-XXXX
+    return result.match(/.{1,4}/g).join('-');
 }
 
 function isValidUrl(url) {
@@ -152,85 +374,377 @@ function isValidUrl(url) {
     }
 }
 
-async function init(){
-    const saved = localStorage.getItem("linksData");
-    linksData = saved ? JSON.parse(saved) : [...defaultLinks];
+// ===== OWNER AUTH =====
+async function ownerLogin() {
+    const pin = document.getElementById("ownerPinInput").value;
+    if (!pin) {
+        showToast("❌ Bitte PIN eingeben", "error");
+        return;
+    }
+    const inputHash = await hashPin(pin);
+    const savedHash = localStorage.getItem("ownerPinHash") || DEFAULT_ADMIN_HASH;
+
+    if (inputHash === savedHash) {
+        role = "owner";
+        document.getElementById("ownerPinInput").value = "";
+        showToast(`✅ Willkommen, ${appConfig.ownerName || 'Admin'}!`, "success");
+        render();
+    } else {
+        showToast("❌ PIN falsch!", "error");
+    }
+}
+
+function ownerLogout() {
+    role = "viewer";
+    undoStack = [];
+    activeRecoveryCode = null;
+    document.getElementById("recoveryStep2").classList.add("hidden");
+    document.getElementById("recoveryStep1").classList.remove("hidden");
+    showToast("🔓 Abgemeldet", "info");
     render();
 }
 
-function render(){
+// ===== FORGOT PASSWORD =====
+function showForgotSection() {
+    document.getElementById("forgotSection").classList.remove("hidden");
+    document.getElementById("ownerLoginSection").classList.add("hidden");
+}
+
+function hideForgotSection() {
+    document.getElementById("forgotSection").classList.add("hidden");
+    document.getElementById("ownerLoginSection").classList.remove("hidden");
+    document.getElementById("recoveryCodeInput").value = "";
+    document.getElementById("newPinInput").value = "";
+    document.getElementById("confirmPinInput").value = "";
+    document.getElementById("recoveryStep2").classList.add("hidden");
+    document.getElementById("recoveryStep1").classList.remove("hidden");
+    activeRecoveryCode = null;
+}
+
+async function verifyRecoveryCode() {
+    const inputCode = document.getElementById("recoveryCodeInput").value.trim().toUpperCase().replace(/-/g, '');
+    const inputCodeFormatted = inputCode.match(/.{1,4}/g).join('-').toUpperCase();
+
+    const found = recoveryCodes.find(rc => !rc.used && (
+        rc.code === inputCodeFormatted || rc.code === inputCode
+    ));
+
+    if (found) {
+        activeRecoveryCode = found;
+        document.getElementById("recoveryStep1").classList.add("hidden");
+        document.getElementById("recoveryStep2").classList.remove("hidden");
+        showToast("✅ Code verifiziert! Geben Sie einen neuen PIN ein.", "success");
+    } else {
+        showToast("❌ Ungültiger oder bereits verwendeter Code!", "error");
+    }
+}
+
+async function resetPinWithRecovery() {
+    if (!activeRecoveryCode) {
+        showToast("❌ Bitte zuerst den Recovery-Code verifizieren!", "error");
+        return;
+    }
+    const newPin = document.getElementById("newPinInput").value;
+    const confirmPin = document.getElementById("confirmPinInput").value;
+
+    if (!newPin || newPin.length < 4) {
+        showToast("❌ PIN muss mindestens 4 Zeichen haben!", "error");
+        return;
+    }
+    if (newPin !== confirmPin) {
+        showToast("❌ PINs stimmen nicht überein!", "error");
+        return;
+    }
+
+    // PIN zurücksetzen
+    const newHash = await hashPin(newPin);
+    localStorage.setItem("ownerPinHash", newHash);
+
+    // Recovery Code als verwendet markieren
+    const rcIndex = recoveryCodes.findIndex(rc => rc.code === activeRecoveryCode.code);
+    if (rcIndex !== -1) {
+        recoveryCodes[rcIndex].used = true;
+        recoveryCodes[rcIndex].usedAt = new Date().toISOString();
+        localStorage.setItem("recoveryCodes", JSON.stringify(recoveryCodes));
+    }
+
+    showToast("✅ PIN erfolgreich geändert!", "success");
+    hideForgotSection();
+    renderRecoveryCodesList();
+}
+
+// ===== PIN ÄNDERN =====
+async function changePin() {
+    const current = document.getElementById("currentPinChange").value;
+    const newPin = document.getElementById("newPinChange").value;
+    const confirmPin = document.getElementById("confirmPinChange").value;
+
+    if (!current || !newPin || !confirmPin) {
+        showToast("❌ Bitte alle Felder ausfüllen!", "error");
+        return;
+    }
+    if (newPin.length < 4) {
+        showToast("❌ PIN muss mindestens 4 Zeichen haben!", "error");
+        return;
+    }
+    if (newPin !== confirmPin) {
+        showToast("❌ Neue PINs stimmen nicht überein!", "error");
+        return;
+    }
+
+    const currentHash = await hashPin(current);
+    const savedHash = localStorage.getItem("ownerPinHash") || DEFAULT_ADMIN_HASH;
+
+    if (currentHash !== savedHash) {
+        showToast("❌ Aktueller PIN falsch!", "error");
+        return;
+    }
+
+    const newHash = await hashPin(newPin);
+    localStorage.setItem("ownerPinHash", newHash);
+
+    document.getElementById("currentPinChange").value = "";
+    document.getElementById("newPinChange").value = "";
+    document.getElementById("confirmPinChange").value = "";
+
+    showToast("✅ PIN wurde erfolgreich geändert!", "success");
+}
+
+// ===== HASH ANZEIGEN =====
+async function showHash() {
+    const savedHash = localStorage.getItem("ownerPinHash") || DEFAULT_ADMIN_HASH;
+    document.getElementById("hashValue").textContent = savedHash;
+    document.getElementById("hashDisplay").classList.remove("hidden");
+}
+
+function copyHash() {
+    const hash = localStorage.getItem("ownerPinHash") || DEFAULT_ADMIN_HASH;
+    navigator.clipboard.writeText(hash).then(() => {
+        showToast("📋 Hash kopiert!", "success");
+    });
+}
+
+function copyRecoveryCode(code) {
+    navigator.clipboard.writeText(code).then(() => {
+        showToast("📋 Code kopiert!", "success");
+    });
+}
+
+// ===== LINKS MANAGEMENT =====
+function render() {
     linksDiv.innerHTML = "";
     linksData.forEach((l, i) => {
         const div = document.createElement("div");
         div.className = "link";
         div.innerHTML = `<a href="${l.url}" target="_blank">${l.title}</a>`;
-        if(role === "owner"){
+        if (role === "owner") {
             const del = document.createElement("button");
-            del.textContent = "Löschen";
+            del.textContent = "🗑️";
             del.className = "del";
-            del.onclick = () => {
-                undoStack.push(linksData[i]);
-                linksData = linksData.filter((_, index) => index !== i);
-                save();
-            };
+            del.onclick = () => deleteLink(i);
             div.appendChild(del);
         }
         linksDiv.appendChild(div);
     });
+
     adminArea.classList.toggle("hidden", role !== "owner");
-    loginBtn.classList.toggle("hidden", role === "owner");
     logoutBtn.classList.toggle("hidden", role !== "owner");
     undoBtn.classList.toggle("hidden", undoStack.length === 0 || role !== "owner");
+
+    if (role !== "owner") {
+        document.getElementById("ownerLoginSection").classList.remove("hidden");
+    } else {
+        document.getElementById("ownerLoginSection").classList.add("hidden");
+    }
+
+    renderEditLinksList();
+    updateStatusBar();
 }
 
-function save(){
+function renderEditLinksList() {
+    const list = document.getElementById("editLinksList");
+    if (role !== "owner") {
+        list.innerHTML = "";
+        return;
+    }
+    let html = "";
+    linksData.forEach((l, i) => {
+        html += `
+            <div class="link" style="margin-bottom:8px;">
+                <input id="editTitle${i}" value="${l.title}" style="flex:1; margin:0 8px 0 0; font-size:14px;">
+                <input id="editUrl${i}" value="${l.url}" style="flex:1; margin:0 8px 0 0; font-size:14px;">
+                <button class="del" style="font-size:12px; padding:4px 8px;" onclick="updateLink(${i})">💾</button>
+            </div>
+        `;
+    });
+    list.innerHTML = html;
+}
+
+function addLink() {
+    const t = document.getElementById("linkTitle").value.trim();
+    const u = document.getElementById("linkUrl").value.trim();
+    if (t && u && isValidUrl(u)) {
+        if (linksData.length >= appConfig.maxLinks) {
+            showToast(`❌ Maximal ${appConfig.maxLinks} Links erlaubt!`, "error");
+            return;
+        }
+        linksData.push({ title: t, url: u });
+        document.getElementById("linkTitle").value = "";
+        document.getElementById("linkUrl").value = "";
+        save();
+        showToast("✅ Link hinzugefügt!", "success");
+    } else {
+        showToast("❌ Bitte gültigen Titel und URL eingeben!", "error");
+    }
+}
+
+function deleteLink(index) {
+    undoStack.push(linksData[index]);
+    linksData = linksData.filter((_, i) => i !== index);
+    save();
+    showToast("🗑️ Link gelöscht. (Rückgängig möglich)", "info");
+}
+
+function undoDelete() {
+    if (undoStack.length) {
+        linksData.push(undoStack.pop());
+        save();
+        showToast("↩️ Löschung rückgängig gemacht!", "success");
+    }
+}
+
+function updateLink(index) {
+    const title = document.getElementById(`editTitle${index}`).value.trim();
+    const url = document.getElementById(`editUrl${index}`).value.trim();
+    if (title && url && isValidUrl(url)) {
+        linksData[index] = { title, url };
+        save();
+        showToast("💾 Link aktualisiert!", "success");
+    } else {
+        showToast("❌ Ungültige Daten!", "error");
+    }
+}
+
+function save() {
     localStorage.setItem("linksData", JSON.stringify(linksData));
     render();
 }
 
-loginBtn.onclick = async () => {
-    const pin = prompt("Admin PIN eingeben:");
-    if(!pin) {
-        alert("❌ Bitte PIN eingeben");
-        return;
-    }
-    
-    // Vergleiche Hash statt Klartext
-    const inputHash = await hashPin(pin);
-    if(inputHash === ADMIN_PIN_HASH){
-        role = "owner";
-        render();
-    } else {
-        alert("❌ PIN falsch");
-    }
-};
+// ===== IMPORT / EXPORT =====
+function exportData() {
+    const data = {
+        exportDate: new Date().toISOString(),
+        config: appConfig,
+        links: linksData,
+        hash: localStorage.getItem("ownerPinHash") || DEFAULT_ADMIN_HASH,
+        recoveryCodes: recoveryCodes.map(rc => ({ code: rc.code, used: rc.used }))
+    };
+    const json = JSON.stringify(data, null, 2);
+    const blob = new Blob([json], { type: "application/json" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `links-backup-${new Date().toISOString().slice(0, 10)}.json`;
+    a.click();
+    URL.revokeObjectURL(url);
+    showToast("📥 Backup exportiert!", "success");
+}
 
-logoutBtn.onclick = () => {
-    role = "viewer";
-    render();
-};
+function showImportSection() {
+    document.getElementById("importSection").classList.toggle("hidden");
+}
 
-document.getElementById("addBtn").onclick = () => {
-    const t = document.getElementById("title").value.trim();
-    const u = document.getElementById("url").value.trim();
-    if(t && u && isValidUrl(u)){
-        linksData.push({title:t, url:u});
-        document.getElementById("title").value = "";
-        document.getElementById("url").value = "";
+function importData() {
+    try {
+        const input = document.getElementById("importData").value.trim();
+        const data = JSON.parse(input);
+        if (data.config) {
+            appConfig = { ...DEFAULT_CONFIG, ...data.config };
+            localStorage.setItem("appConfig", JSON.stringify(appConfig));
+        }
+        if (data.links && Array.isArray(data.links)) {
+            linksData = data.links;
+        }
+        if (data.hash) {
+            localStorage.setItem("ownerPinHash", data.hash);
+        }
+        if (data.recoveryCodes && Array.isArray(data.recoveryCodes)) {
+            const newCodes = [];
+            data.recoveryCodes.forEach(rc => {
+                const existing = recoveryCodes.find(c => c.code === rc.code);
+                if (!existing) {
+                    newCodes.push({
+                        code: rc.code,
+                        used: rc.used || false,
+                        createdAt: new Date().toISOString(),
+                        usedAt: rc.used ? new Date().toISOString() : null
+                    });
+                }
+            });
+            recoveryCodes = [...recoveryCodes, ...newCodes];
+            localStorage.setItem("recoveryCodes", JSON.stringify(recoveryCodes));
+        }
         save();
-    } else {
-        alert("❌ Bitte geben Sie einen gültigen Titel und eine gültige URL ein.");
+        loadConfig();
+        renderRecoveryCodesList();
+        document.getElementById("importData").value = "";
+        document.getElementById("importSection").classList.add("hidden");
+        showToast("✅ Daten importiert!", "success");
+    } catch (e) {
+        showToast("❌ Ungültige Daten!", "error");
     }
-};
+}
 
-undoBtn.onclick = () => {
-    if(undoStack.length){
-        linksData.push(undoStack.pop());
-        save();
+// ===== STATUS BAR =====
+function updateStatusBar() {
+    const status = role === "owner"
+        ? `<span class="badge badge-green">🔓 Admin-Modus</span><span class="badge badge-blue">📊 ${linksData.length} Links</span><span class="badge badge-yellow">🔑 ${recoveryCodes.filter(r => !r.used).length} Recovery-Codes aktiv</span>`
+        : `<span class="badge badge-red">👁️ Nur-Lesen</span><span class="badge badge-blue">📊 ${linksData.length} Links</span>`;
+    statusBar.innerHTML = status;
+}
+
+// ===== TOAST NOTIFICATIONS =====
+function showToast(message, type) {
+    const existing = document.querySelector(".toast");
+    if (existing) existing.remove();
+
+    const toast = document.createElement("div");
+    toast.className = "toast";
+    toast.style.cssText = `
+        position: fixed; top: 10px; left: 50%; transform: translateX(-50%);
+        z-index: 9999; padding: 12px 20px; border-radius: 10px;
+        font-weight: bold; font-size: 14px; max-width: 90%;
+        animation: fadeIn 0.3s ease;
+        ${type === 'success' ? 'background:#1a4422;color:#66ff88;border:1px solid #2a6a42;' :
+          type === 'error' ? 'background:#442222;color:#ff6666;border:1px solid #6a2222;' :
+          'background:#333;color:#fff;border:1px solid #444;'}
+    `;
+    toast.textContent = message;
+    document.body.appendChild(toast);
+    setTimeout(() => {
+        toast.style.opacity = "0";
+        toast.style.transition = "opacity 0.5s";
+        setTimeout(() => toast.remove(), 500);
+    }, 3000);
+}
+
+// ===== SETUP BEIM ERSTEN MAL =====
+async function firstTimeSetup() {
+    const hasSetup = localStorage.getItem("ownerPinHash");
+    if (!hasSetup) {
+        // Ersten Hash setzen
+        const hash = await hashPin(DEFAULT_ADMIN_PIN);
+        localStorage.setItem("ownerPinHash", hash);
+        // Generiere erste Recovery Codes
+        generateRecoveryCodes();
     }
-};
+}
 
-document.addEventListener("DOMContentLoaded", init);
+// ===== EVENT LISTENER =====
+document.addEventListener("DOMContentLoaded", async () => {
+    await firstTimeSetup();
+    await init();
+});
 </script>
 </body>
 </html>
