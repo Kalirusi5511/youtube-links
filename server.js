@@ -3,6 +3,7 @@ const express = require('express');
 const path = require('path');
 const crypto = require('crypto');
 const fs = require('fs');
+const session = require('express-session');
 
 // dotenv nur in Entwicklung
 if (process.env.NODE_ENV !== 'production') {
@@ -15,31 +16,31 @@ const PORT = process.env.PORT || 3000;
 // ---------- Middleware ----------
 app.use(express.json());
 
+// Session MUSS VOR den Routes!
+app.use(session({
+  secret: process.env.SESSION_SECRET || 'super-geheimes-secret-2024',
+  resave: false,
+  saveUninitialized: false,
+  cookie: { maxAge: 24 * 60 * 60 * 1000 }
+}));
+
 // ---------- SQL.js Import (async!) ----------
 let db;
-
 async function initDatabase() {
   const initSqlJs = require('sql.js');
   
-  // WICHTIG: Lokale WASM Datei verwenden!
-  const wasmPath = path.join(__dirname, 'node_modules', 'sql.js', 'dist', 'sql-wasm.wasm');
-  
-  // Prüfe ob WASM Datei existiert
-  if (!fs.existsSync(wasmPath)) {
-    console.error('❌ WASM Datei nicht gefunden:', wasmPath);
-    process.exit(1);
-  }
-
+  // Korrigiert: Nur den Dateinamen weitergeben, nicht den vollen Pfad!
   const SQL = await initSqlJs({
-    // Pfad zur lokalen WASM Datei
-    locateFile: file => wasmPath
+    locateFile: file => {
+      console.log('📦 Lade WASM Datei:', file);
+      return `node_modules/sql.js/dist/${file}`;
+    }
   });
-
+  
   console.log('✅ SQL.js geladen');
-
+  
   // Datenbank laden oder neue erstellen
   const dbFile = 'database.db';
-  
   if (fs.existsSync(dbFile)) {
     const buffer = fs.readFileSync(dbFile);
     db = new SQL.Database(buffer);
@@ -48,37 +49,12 @@ async function initDatabase() {
     db = new SQL.Database();
     console.log('✅ Neue Datenbank erstellt');
   }
-
+  
   // Tabellen erstellen
-  db.run(`
-    CREATE TABLE IF NOT EXISTS users (
-      id INTEGER PRIMARY KEY AUTOINCREMENT,
-      email TEXT UNIQUE NOT NULL,
-      password_hash TEXT NOT NULL,
-      created_at TEXT DEFAULT CURRENT_TIMESTAMP
-    )
-  `);
-
-  db.run(`
-    CREATE TABLE IF NOT EXISTS backup_codes (
-      id INTEGER PRIMARY KEY AUTOINCREMENT,
-      user_id INTEGER NOT NULL,
-      code TEXT NOT NULL,
-      used INTEGER DEFAULT 0,
-      created_at TEXT DEFAULT CURRENT_TIMESTAMP,
-      used_at TEXT
-    )
-  `);
-
-  db.run(`
-    CREATE TABLE IF NOT EXISTS reset_tokens (
-      id INTEGER PRIMARY KEY AUTOINCREMENT,
-      user_id INTEGER NOT NULL,
-      token TEXT NOT NULL,
-      expires_at TEXT
-    )
-  `);
-
+  db.run(`CREATE TABLE IF NOT EXISTS users (id INTEGER PRIMARY KEY AUTOINCREMENT, email TEXT UNIQUE NOT NULL, password_hash TEXT NOT NULL, created_at TEXT DEFAULT CURRENT_TIMESTAMP)`);
+  db.run(`CREATE TABLE IF NOT EXISTS backup_codes (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER NOT NULL, code TEXT NOT NULL, used INTEGER DEFAULT 0, created_at TEXT DEFAULT CURRENT_TIMESTAMP, used_at TEXT)`);
+  db.run(`CREATE TABLE IF NOT EXISTS reset_tokens (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER NOT NULL, token TEXT NOT NULL, expires_at TEXT)`);
+  
   // Admin User erstellen (falls nicht vorhanden)
   const existingAdmin = db.exec("SELECT * FROM users WHERE email = 'admin@example.com'");
   if (existingAdmin.length === 0 || existingAdmin[0].values.length === 0) {
@@ -86,7 +62,7 @@ async function initDatabase() {
     db.run("INSERT INTO users (email, password_hash) VALUES (?, ?)", ['admin@example.com', hashedPassword]);
     console.log('✅ Admin User erstellt: admin@example.com / admin123');
   }
-
+  
   saveDatabase();
 }
 
@@ -139,66 +115,48 @@ app.get('/api/health', (req, res) => {
 // --- LOGIN ---
 app.post('/api/auth/login', (req, res) => {
   const { email, password } = req.body;
-  
   if (!email || !password) {
     return res.status(400).json({ error: 'E-Mail und Passwort erforderlich' });
   }
-
   const hashedPassword = hashToken(password);
   const result = db.exec("SELECT * FROM users WHERE email = ? AND password_hash = ?", [email, hashedPassword]);
-  
   if (result.length === 0 || result[0].values.length === 0) {
     return res.status(401).json({ error: 'Ungültige Anmeldedaten' });
   }
-
   const user = result[0].values[0];
-  
   req.session.userId = user[0];
   req.session.email = user[1];
-  
   return res.json({ success: true, email: user[1] });
 });
 
 // --- REGISTER ---
 app.post('/api/auth/register', (req, res) => {
   const { email, password } = req.body;
-  
   if (!email || !password) {
     return res.status(400).json({ error: 'E-Mail und Passwort erforderlich' });
   }
-
   const existing = db.exec("SELECT * FROM users WHERE email = ?", [email]);
   if (existing.length > 0 && existing[0].values.length > 0) {
     return res.status(400).json({ error: 'E-Mail bereits registriert' });
   }
-
   const hashedPassword = hashToken(password);
   db.run("INSERT INTO users (email, password_hash) VALUES (?, ?)", [email, hashedPassword]);
   saveDatabase();
-
   return res.json({ success: true, message: 'Account erstellt!' });
 });
 
-// --- FORGOT PASSWORD (Backup-Codes generieren) ---
-app.post('/api/auth/forgot-password', async (req, res) => {
+// --- FORGOT PASSWORD ---
+app.post('/api/auth/forgot-password', (req, res) => {
   const { email } = req.body;
-
   if (!email) {
     return res.status(400).json({ error: 'E-Mail erforderlich' });
   }
-
   const result = db.exec("SELECT id FROM users WHERE email = ?", [email]);
-  
   if (result.length === 0 || result[0].values.length === 0) {
     return res.json({ message: 'Falls ein Konto existiert, wurden Codes per E-Mail gesendet.' });
   }
-
   const userId = result[0].values[0][0];
-
-  // Alte nicht verwendete Codes löschen
   db.run("DELETE FROM backup_codes WHERE user_id = ? AND used = 0", [userId]);
-
-  // 3 neue Backup-Codes generieren
   const codes = [];
   for (let i = 0; i < 3; i++) {
     const code = generateBackupCode();
@@ -206,75 +164,53 @@ app.post('/api/auth/forgot-password', async (req, res) => {
     codes.push(code);
   }
   saveDatabase();
-
-  // DEV MODE: Codes in Console loggen
   console.log('\n📧 === BACKUP CODES (DEV MODE) ===');
   console.log('An:', email);
   codes.forEach(c => console.log('  Code:', c));
   console.log('===================================\n');
-
   return res.json({ message: 'Falls ein Konto existiert, wurden Codes per E-Mail gesendet.' });
 });
 
 // --- BACKUP-CODE VERIFIZIEREN ---
 app.post('/api/auth/verify-backup-code', (req, res) => {
   const { email, code } = req.body;
-
   if (!email || !code) {
     return res.status(400).json({ error: 'E-Mail und Code erforderlich' });
   }
-
   const userResult = db.exec("SELECT id FROM users WHERE email = ?", [email]);
   if (userResult.length === 0 || userResult[0].values.length === 0) {
     return res.status(404).json({ error: 'User nicht gefunden' });
   }
-
   const userId = userResult[0].values[0][0];
-
-  const validCodeResult = db.exec(
-    "SELECT * FROM backup_codes WHERE user_id = ? AND code = ? AND used = 0",
-    [userId, hashCode(code)]
-  );
-
+  const validCodeResult = db.exec("SELECT * FROM backup_codes WHERE user_id = ? AND code = ? AND used = 0", [userId, hashCode(code)]);
   if (validCodeResult.length === 0 || validCodeResult[0].values.length === 0) {
     return res.status(401).json({ error: 'Ungültiger oder bereits verwendeter Code' });
   }
-
   const codeId = validCodeResult[0].values[0][0];
-
-  // Code als verwendet markieren
   const now = new Date().toISOString();
   db.run("UPDATE backup_codes SET used = 1, used_at = ? WHERE id = ?", [now, codeId]);
-
   const resetToken = generateResetToken();
-
   const expiresAt = new Date(Date.now() + 3600000).toISOString();
   db.run("INSERT INTO reset_tokens (user_id, token, expires_at) VALUES (?, ?, ?)", [userId, hashToken(resetToken), expiresAt]);
   saveDatabase();
-
   return res.json({ success: true, resetToken: resetToken });
 });
 
 // --- PASSWORT ZURÜCKSETZEN ---
 app.post('/api/auth/reset-password', (req, res) => {
   const { resetToken, newPassword } = req.body;
-
-  const tokenResult = db.exec(
-    "SELECT user_id FROM reset_tokens WHERE token = ? AND expires_at > ?",
-    [hashToken(resetToken), new Date().toISOString()]
-  );
-
+  if (!resetToken || !newPassword) {
+    return res.status(400).json({ error: 'Token und neues Passwort erforderlich' });
+  }
+  const tokenResult = db.exec("SELECT user_id FROM reset_tokens WHERE token = ? AND expires_at > ?", [hashToken(resetToken), new Date().toISOString()]);
   if (tokenResult.length === 0 || tokenResult[0].values.length === 0) {
     return res.status(401).json({ error: 'Token ungültig oder abgelaufen' });
   }
-
   const userId = tokenResult[0].values[0][0];
   const hashedPassword = hashToken(newPassword);
-
   db.run("UPDATE users SET password_hash = ? WHERE id = ?", [hashedPassword, userId]);
   db.run("DELETE FROM reset_tokens WHERE token = ?", [hashToken(resetToken)]);
   saveDatabase();
-
   return res.json({ message: 'Passwort erfolgreich geändert!' });
 });
 
@@ -293,30 +229,11 @@ app.get('/api/auth/session', (req, res) => {
 });
 
 // ==================== STATIC & FALLBACK ====================
-
-app.get('/', (req, res) => {
-  res.sendFile(path.join(staticDir, 'index.html'), err => {
-    if (err) {
-      res.status(500).send('Server error');
-    }
-  });
-});
-
 app.get('*', (req, res) => res.sendFile(path.join(staticDir, 'index.html')));
 
 // ==================== SERVER START ====================
-
 async function start() {
   await initDatabase();
-  
-  const session = require('express-session');
-  app.use(session({
-    secret: process.env.SESSION_SECRET || 'super-geheimes-secret-2024',
-    resave: false,
-    saveUninitialized: false,
-    cookie: { maxAge: 24 * 60 * 60 * 1000 }
-  }));
-
   app.listen(PORT, () => {
     console.log(`🚀 Server läuft auf Port ${PORT}`);
     console.log(`📁 Statische Dateien: ${staticDir}`);
