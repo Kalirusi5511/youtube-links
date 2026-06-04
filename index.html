@@ -1,128 +1,75 @@
 <!DOCTYPE html>
 <html lang="de">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
 <title>🔗 Externe Links</title>
 <style>
-* {
-    box-sizing: border-box;
-}
-html, body {
-    margin: 0;
-    padding: 0;
-    width: 100%;
-    min-height: 100vh;
-    font-family: 'Segoe UI', Roboto, sans-serif;
-    background: #0f0f0f;
-    color: #fff;
-}
-/* Container */
-.app {
-    width: 100%;
-    padding: 15px;
-}
-/* Titel */
-h2 {
-    text-align: center;
-    font-size: 22px;
-    margin-bottom: 20px;
-}
-/* Inputs & Buttons */
-input, button {
-    width: 100%;
-    padding: 16px;
-    margin: 10px 0;
-    border-radius: 12px;
-    border: none;
-    font-size: 16px;
-}
-input {
-    background: #222;
-    color: #fff;
-    border: 1px solid #333;
-}
-button {
-    cursor: pointer;
-    font-weight: bold;
-}
-#addBtn {
-    background: #38bdf8;
-    color: #000;
-}
-.linkBtn {
-    background: #333;
-    color: #fff;
-    border-radius: 10px;
-}
-/* Link Karten */
-.link {
-    background: #1a1a1a;
-    padding: 16px;
-    border-radius: 14px;
-    margin-bottom: 12px;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-}
-.link a {
-    color: #3ea6ff;
-    text-decoration: none;
-    font-size: 16px;
-    word-break: break-word;
-}
-.del {
-    background: #442222;
-    color: #ff6666;
-    padding: 8px 12px;
-    border-radius: 8px;
-    margin-left: 10px;
-}
-.hidden {
-    display: none;
-}
-/* Mobile Optimierung */
-@media (max-width: 480px) {
-    .link {
-        flex-direction: column;
-        align-items: flex-start;
-        gap: 10px;
-    }
-    .del {
-        width: 100%;
-        text-align: center;
-        margin-left: 0;
-    }
+* { box-sizing: border-box; }
+html,body { margin:0; padding:0; width:100%; min-height:100vh; font-family: 'Segoe UI', Roboto, sans-serif; background:#0f0f0f; color:#fff; }
+.app { width:100%; padding:15px; max-width:980px; margin:0 auto; }
+h2 { text-align:center; font-size:22px; margin-bottom:20px; }
+.status { text-align:center; padding:8px; font-size:13px; color:#bbb; margin-bottom:10px; }
+input, button, textarea { width:100%; padding:12px; margin:8px 0; border-radius:10px; border:none; font-size:15px; }
+input { background:#222; color:#fff; border:1px solid #333; }
+button { cursor:pointer; font-weight:700; }
+#addBtn { background:#38bdf8; color:#000; }
+.linkBtn { background:#333; color:#fff; border-radius:10px; }
+.actionBtn { background:#22c55e; color:#fff; padding:12px; }
+.importBtn { background:#a855f7; color:#fff; padding:12px; }
+.link { background:#141414; padding:14px; border-radius:12px; margin-bottom:12px; display:flex; gap:12px; align-items:center; }
+.link a { color:#3ea6ff; text-decoration:none; font-size:16px; word-break:break-word; flex:1 1 auto; }
+.del { background:#442222; color:#ff9999; padding:8px 14px; border-radius:8px; margin-left:0; flex:0 0 auto; min-width:90px; text-align:center; }
+.hidden { display:none; }
+.modal { position:fixed; top:0; left:0; width:100%; height:100%; display:flex; align-items:center; justify-content:center; background:rgba(0,0,0,0.75); z-index:2000; }
+.modal-content { background:#111; padding:18px; border-radius:12px; width:92%; max-width:480px; color:#ddd; }
+.file-input { display:none; }
+@media (max-width:480px) {
+  .link { flex-direction:column; align-items:flex-start; }
+  .del { width:100%; min-width:unset; }
 }
 </style>
 </head>
 <body>
 <div class="app">
-    <h2>🔗 Externe Links</h2>
-    <div id="adminArea" class="hidden">
-        <input id="title" placeholder="Linktitel">
-        <input id="url" placeholder="https://example.com">
-        <button id="addBtn">+ Link hinzufügen</button>
-    </div>
-    <button id="loginBtn" class="linkBtn">🔐 Admin Login</button>
-    <button id="logoutBtn" class="linkBtn hidden">🔓 Logout</button>
-    <button id="undoBtn" class="linkBtn hidden">↩️ Rückgängig</button>
-    <hr style="border-color:#222; margin:20px 0;">
-    <div id="links"></div>
-</div>
-<script>
-// 🔐 ADMIN PIN - SHA-256 HASH
-// Passwort ist NICHT mehr im Klartext sichtbar!
-// Um den PIN zu ändern: Hash generieren und hier einsetzen
-const ADMIN_PIN_HASH = "e084d7507dab6604894c203b3834cd7ce8f16385daeae56e202cd9e930f788d2";
+  <h2>🔗 Externe Links</h2>
+  <div id="status" class="status">💾 bereit</div>
 
+  <div id="adminArea" class="hidden">
+    <input id="title" placeholder="Linktitel" />
+    <input id="url" placeholder="https://example.com" />
+    <button id="addBtn">+ Link hinzufügen</button>
+  </div>
+
+  <button id="loginBtn" class="linkBtn">🔐 Admin Login</button>
+  <button id="logoutBtn" class="linkBtn hidden">🔓 Logout</button>
+  <button id="undoBtn" class="linkBtn hidden">↩️ Rückgängig</button>
+
+  <hr style="border-color:#222; margin:14px 0;" />
+
+  <!-- Sync / Backup Buttons -->
+  <button id="exportBtn" class="actionBtn">📤 Link-URL (kopieren)</button>
+  <button id="downloadBtn" class="actionBtn" style="background:#0ea5a4; margin-top:8px;">⬇️ Backup herunterladen (JSON)</button>
+  <label for="fileRestore" class="importBtn" style="display:block; text-align:center; margin-top:8px; cursor:pointer;">📥 Backup wiederherstellen (Datei wählen)</label>
+  <input id="fileRestore" class="file-input" type="file" accept="application/json" />
+  <div style="font-size:13px; color:#888; margin-top:8px;">Hinweis: Backup als Datei funktioniert zuverlässig, auch wenn Cookies oder Zwischenspeicher gelöscht werden.</div>
+
+  <hr style="border-color:#222; margin:18px 0;" />
+  <div id="links"></div>
+</div>
+
+<script>
+// ----------------- Konfiguration -----------------
+const ADMIN_PIN_HASH = "e084d7507dab6604894c203b3834cd7ce8f16385daeae56e202cd9e930f788d2";
+const STORAGE_KEY = "linksData_v2";
 const defaultLinks = [
-    { title: "🎄 Adventskalender", url: "https://kalirusi5511.github.io/Adventskalender/" },
-    { title: "🛒 Mein Markt Plugin Projekt", url: "https://kalirusi5511.github.io/Mein-Markt-Plugin-Projekt/" },
-    { title: "📢 WhatsApp Channel", url: "https://whatsapp.com/channel/0029Vb62Zu4DTkK6HVAfJZ39" },
-    { title: "🎮 Discord Server", url: "https://discord.gg/NQ2rjRQE" },
-    { title: "🎮 World-Plugin", url: "https://github.com/Kalirusi5511/World-Plugin" }
+  { title: "🎄 Adventskalender", url: "https://kalirusi5511.github.io/Adventskalender/" },
+  { title: "🛒 Mein Markt Plugin Projekt", url: "https://kalirusi5511.github.io/Mein-Markt-Plugin-Projekt/" },
+  { title: "📢 WhatsApp Channel", url: "https://whatsapp.com/channel/0029Vb62Zu4DTkK6HVAfJZ39" },
+  { title: "🎮 Discord Server", url: "https://discord.gg/NQ2rjRQE" },
+  { title: "🎮 World-Plugin", url: "https://github.com/Kalirusi5511/World-Plugin" }
 ];
+// -------------------------------------------------
 
 let role = "viewer";
 let linksData = [];
@@ -133,103 +80,191 @@ const adminArea = document.getElementById("adminArea");
 const loginBtn = document.getElementById("loginBtn");
 const logoutBtn = document.getElementById("logoutBtn");
 const undoBtn = document.getElementById("undoBtn");
+const statusDiv = document.getElementById("status");
+const fileInput = document.getElementById("fileRestore");
 
-// 🔐 SHA-256 Hashing Funktion
+// SHA-256 Hash
 async function hashPin(pin) {
-    const encoder = new TextEncoder();
-    const data = encoder.encode(pin);
-    const hashBuffer = await crypto.subtle.digest('SHA-256', data);
-    const hashArray = Array.from(new Uint8Array(hashBuffer));
-    return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+  const enc = new TextEncoder();
+  const buff = await crypto.subtle.digest("SHA-256", enc.encode(pin));
+  return Array.from(new Uint8Array(buff)).map(b => b.toString(16).padStart(2,"0")).join("");
 }
 
-function isValidUrl(url) {
-    try {
-        new URL(url);
-        return true;
-    } catch (e) {
-        return false;
+function isValidUrl(u) {
+  try { new URL(u); return true; } catch(e){ return false; }
+}
+
+function showStatus(msg, timeout = 3000) {
+  statusDiv.textContent = msg;
+  if (timeout) setTimeout(()=> { statusDiv.textContent = "💾 bereit"; }, timeout);
+}
+
+function loadFromStorageOrDefaults() {
+  const s = localStorage.getItem(STORAGE_KEY);
+  if (s) {
+    try { linksData = JSON.parse(s); } catch(e) { linksData = [...defaultLinks]; }
+  } else {
+    linksData = [...defaultLinks];
+  }
+}
+
+// Render
+function render() {
+  linksDiv.innerHTML = "";
+  linksData.forEach((l, i) => {
+    const row = document.createElement("div");
+    row.className = "link";
+    const a = document.createElement("a");
+    a.href = l.url;
+    a.target = "_blank";
+    a.rel = "noopener noreferrer";
+    a.innerHTML = l.title;
+    row.appendChild(a);
+
+    if (role === "owner") {
+      const del = document.createElement("button");
+      del.className = "del";
+      del.textContent = "Löschen";
+      del.onclick = () => {
+        undoStack.push(linksData[i]);
+        linksData.splice(i,1);
+        save();
+      };
+      row.appendChild(del);
     }
+    linksDiv.appendChild(row);
+  });
+
+  adminArea.classList.toggle("hidden", role !== "owner");
+  loginBtn.classList.toggle("hidden", role === "owner");
+  logoutBtn.classList.toggle("hidden", role !== "owner");
+  undoBtn.classList.toggle("hidden", undoStack.length === 0 || role !== "owner");
 }
 
-async function init(){
-    const saved = localStorage.getItem("linksData");
-    linksData = saved ? JSON.parse(saved) : [...defaultLinks];
-    render();
+// Save
+function save() {
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(linksData));
+  render();
+  showStatus("💾 Gespeichert " + new Date().toLocaleTimeString(), 2500);
 }
 
-function render(){
-    linksDiv.innerHTML = "";
-    linksData.forEach((l, i) => {
-        const div = document.createElement("div");
-        div.className = "link";
-        div.innerHTML = `<a href="${l.url}" target="_blank">${l.title}</a>`;
-        if(role === "owner"){
-            const del = document.createElement("button");
-            del.textContent = "Löschen";
-            del.className = "del";
-            del.onclick = () => {
-                undoStack.push(linksData[i]);
-                linksData = linksData.filter((_, index) => index !== i);
-                save();
-            };
-            div.appendChild(del);
+// Init
+async function init() {
+  // Wenn URL "data" Parameter hat: versuche Import (sicherer: benutzt encodeURIComponent/base64)
+  try {
+    const params = new URLSearchParams(window.location.search);
+    const dataParam = params.get("data");
+    if (dataParam) {
+      // try decode safely (URL-encoded base64)
+      try {
+        const decoded = JSON.parse(decodeURIComponent(atob(dataParam)));
+        if (Array.isArray(decoded)) {
+          if (confirm("📥 Geteilte Links gefunden. Importieren?")) {
+            linksData = decoded;
+            save();
+            // URL bereinigen
+            window.history.replaceState({}, document.title, window.location.pathname);
+            showStatus("✅ Importiert aus URL", 3000);
+            return;
+          }
         }
-        linksDiv.appendChild(div);
-    });
-    adminArea.classList.toggle("hidden", role !== "owner");
-    loginBtn.classList.toggle("hidden", role === "owner");
-    logoutBtn.classList.toggle("hidden", role !== "owner");
-    undoBtn.classList.toggle("hidden", undoStack.length === 0 || role !== "owner");
+      } catch(e) {
+        console.warn("URL import failed:", e);
+      }
+    }
+  } catch(e) { console.warn(e); }
+
+  loadFromStorageOrDefaults();
+  render();
+  showStatus("✅ geladen", 1200);
 }
 
-function save(){
-    localStorage.setItem("linksData", JSON.stringify(linksData));
-    render();
-}
-
+// Login / Logout
 loginBtn.onclick = async () => {
-    const pin = prompt("Admin PIN eingeben:");
-    if(!pin) {
-        alert("❌ Bitte PIN eingeben");
-        return;
-    }
-    
-    // Vergleiche Hash statt Klartext
-    const inputHash = await hashPin(pin);
-    if(inputHash === ADMIN_PIN_HASH){
-        role = "owner";
-        render();
-    } else {
-        alert("❌ PIN falsch");
-    }
-};
-
-logoutBtn.onclick = () => {
-    role = "viewer";
+  const pin = prompt("Admin PIN eingeben:");
+  if (!pin) return alert("❌ Bitte PIN eingeben");
+  const h = await hashPin(pin);
+  if (h === ADMIN_PIN_HASH) {
+    role = "owner";
     render();
+    showStatus("🔐 Admin angemeldet", 1800);
+  } else {
+    alert("❌ PIN falsch");
+  }
 };
+logoutBtn.onclick = () => { role = "viewer"; render(); showStatus("🔓 Abgemeldet",1200); };
 
+// Add link
 document.getElementById("addBtn").onclick = () => {
-    const t = document.getElementById("title").value.trim();
-    const u = document.getElementById("url").value.trim();
-    if(t && u && isValidUrl(u)){
-        linksData.push({title:t, url:u});
-        document.getElementById("title").value = "";
-        document.getElementById("url").value = "";
-        save();
-    } else {
-        alert("❌ Bitte geben Sie einen gültigen Titel und eine gültige URL ein.");
-    }
+  const t = document.getElementById("title").value.trim();
+  const u = document.getElementById("url").value.trim();
+  if (!t || !u || !isValidUrl(u)) return alert("❌ Bitte gültigen Titel und URL eingeben.");
+  linksData.push({ title: t, url: u });
+  document.getElementById("title").value = "";
+  document.getElementById("url").value = "";
+  save();
 };
 
+// Undo
 undoBtn.onclick = () => {
-    if(undoStack.length){
-        linksData.push(undoStack.pop());
-        save();
-    }
+  if (undoStack.length === 0) return;
+  linksData.push(undoStack.pop());
+  save();
 };
 
+// Export via URL (kopiert base64-url-encoded string)
+// Hinweis: viele Browser/Clients haben Längenlimits; benutz Backup-Datei, wenn URL zu lang ist.
+document.getElementById("exportBtn").onclick = () => {
+  try {
+    const base64 = btoa(JSON.stringify(linksData));
+    const safe = encodeURIComponent(base64);
+    const share = window.location.origin + window.location.pathname + "?data=" + safe;
+    navigator.clipboard.writeText(share).then(()=> {
+      alert("🔗 Export-URL kopiert. (Falls die URL zu lang ist, benutze das JSON-Backup-File)");
+      showStatus("🔗 Export-URL kopiert",2200);
+    }).catch(()=> { prompt("Kopiere diesen Link:", share); });
+  } catch(e) {
+    alert("❌ Export fehlgeschlagen: " + e.message);
+  }
+};
+
+// Download Backup JSON
+document.getElementById("downloadBtn").onclick = () => {
+  const blob = new Blob([JSON.stringify(linksData, null, 2)], { type: "application/json" });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = "links-backup-" + new Date().toISOString().slice(0,10) + ".json";
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  URL.revokeObjectURL(url);
+  showStatus("⬇️ Backup heruntergeladen",2000);
+};
+
+// Restore from file
+fileInput.addEventListener("change", (ev) => {
+  const f = ev.target.files[0];
+  if (!f) return;
+  const reader = new FileReader();
+  reader.onload = function(e) {
+    try {
+      const parsed = JSON.parse(e.target.result);
+      if (!Array.isArray(parsed)) throw new Error("Ungültiges Format");
+      if (!confirm("🟢 Datei enthält " + parsed.length + " Einträge. Importieren?")) return;
+      linksData = parsed;
+      save();
+      showStatus("📥 Backup importiert",2000);
+    } catch(err) {
+      alert("❌ Fehler beim Import: " + err.message);
+    }
+  };
+  reader.readAsText(f);
+  // clear input so same file can be chosen again
+  ev.target.value = "";
+});
+
+// Start
 document.addEventListener("DOMContentLoaded", init);
 </script>
 </body>
