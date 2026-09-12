@@ -6,27 +6,102 @@
 <title>🔗 Externe Links</title>
 <style>
 * { box-sizing: border-box; }
-html,body { margin:0; padding:0; width:100%; min-height:100vh; font-family: 'Segoe UI', Roboto, sans-serif; background:#0f0f0f; color:#fff; }
-.app { width:100%; padding:15px; max-width:980px; margin:0 auto; }
-h2 { text-align:center; font-size:22px; margin-bottom:20px; }
-.status { text-align:center; padding:8px; font-size:13px; color:#bbb; margin-bottom:10px; }
-input, button, textarea { width:100%; padding:12px; margin:8px 0; border-radius:10px; border:none; font-size:15px; }
-input { background:#222; color:#fff; border:1px solid #333; }
-button { cursor:pointer; font-weight:700; }
-#addBtn { background:#38bdf8; color:#000; }
-.linkBtn { background:#333; color:#fff; border-radius:10px; }
-.actionBtn { background:#22c55e; color:#fff; padding:12px; }
-.importBtn { background:#a855f7; color:#fff; padding:12px; }
-.link { background:#141414; padding:14px; border-radius:12px; margin-bottom:12px; display:flex; gap:12px; align-items:center; }
-.link a { color:#3ea6ff; text-decoration:none; font-size:16px; word-break:break-word; flex:1 1 auto; }
-.del { background:#442222; color:#ff9999; padding:8px 14px; border-radius:8px; margin-left:0; flex:0 0 auto; min-width:90px; text-align:center; }
-.hidden { display:none; }
-.modal { position:fixed; top:0; left:0; width:100%; height:100%; display:flex; align-items:center; justify-content:center; background:rgba(0,0,0,0.75); z-index:2000; }
-.modal-content { background:#111; padding:18px; border-radius:12px; width:92%; max-width:480px; color:#ddd; }
-.file-input { display:none; }
-@media (max-width:480px) {
-  .link { flex-direction:column; align-items:flex-start; }
-  .del { width:100%; min-width:unset; }
+html, body {
+  margin: 0; padding: 0; width: 100%; min-height: 100vh;
+  font-family: 'Segoe UI', Roboto, sans-serif;
+  background: #0f0f0f; color: #fff;
+}
+.app { width: 100%; padding: 15px; max-width: 980px; margin: 0 auto; }
+h2 { text-align: center; font-size: 22px; margin-bottom: 20px; }
+
+.status {
+  text-align: center; padding: 8px; font-size: 13px;
+  color: #bbb; margin-bottom: 10px;
+}
+
+input, button, textarea {
+  width: 100%; padding: 12px; margin: 8px 0;
+  border-radius: 10px; border: none; font-size: 15px;
+}
+input { background: #222; color: #fff; border: 1px solid #333; }
+button { cursor: pointer; font-weight: 700; }
+
+#addBtn { background: #38bdf8; color: #000; }
+.linkBtn { background: #333; color: #fff; border-radius: 10px; }
+.actionBtn { background: #22c55e; color: #fff; padding: 12px; }
+.importBtn { background: #a855f7; color: #fff; padding: 12px; }
+
+/* ===== LINK-KARTEN ===== */
+.link {
+  background: #141414;
+  padding: 14px 16px;
+  border-radius: 12px;
+  margin-bottom: 12px;
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  flex-wrap: wrap;
+  border: 1px solid #1f1f1f;
+}
+
+.link a {
+  color: #3ea6ff;
+  text-decoration: none;
+  font-size: 16px;
+  font-weight: 600;
+  flex: 1 1 200px;
+  min-width: 0;
+  word-break: normal;
+  overflow-wrap: break-word;
+  white-space: normal;
+  line-height: 1.4;
+}
+
+.link a:hover { text-decoration: underline; }
+
+.del {
+  background: #442222;
+  color: #ff9999;
+  padding: 10px 16px;
+  border-radius: 8px;
+  flex: 0 0 auto;
+  min-width: 100px;
+  text-align: center;
+  border: none;
+  cursor: pointer;
+  font-weight: 700;
+  transition: background 0.15s;
+}
+.del:hover { background: #663333; color: #fff; }
+
+.hidden { display: none; }
+
+.modal {
+  position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+  display: flex; align-items: center; justify-content: center;
+  background: rgba(0,0,0,0.75); z-index: 2000;
+}
+.modal-content {
+  background: #111; padding: 18px; border-radius: 12px;
+  width: 92%; max-width: 480px; color: #ddd;
+}
+.file-input { display: none; }
+
+hr { border-color: #222; margin: 14px 0; }
+
+/* ===== MOBILE ===== */
+@media (max-width: 480px) {
+  .link {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 10px;
+  }
+  .link a {
+    font-size: 15px;
+    flex: 1 1 auto;
+    overflow-wrap: anywhere;
+  }
+  .del { width: 100%; }
 }
 </style>
 </head>
@@ -45,7 +120,7 @@ button { cursor:pointer; font-weight:700; }
   <button id="logoutBtn" class="linkBtn hidden">🔓 Logout</button>
   <button id="undoBtn" class="linkBtn hidden">↩️ Rückgängig</button>
 
-  <hr style="border-color:#222; margin:14px 0;" />
+  <hr />
 
   <!-- Sync / Backup Buttons -->
   <button id="exportBtn" class="actionBtn">📤 Link-URL (kopieren)</button>
@@ -54,7 +129,7 @@ button { cursor:pointer; font-weight:700; }
   <input id="fileRestore" class="file-input" type="file" accept="application/json" />
   <div style="font-size:13px; color:#888; margin-top:8px;">Hinweis: Backup als Datei funktioniert zuverlässig, auch wenn Cookies oder Zwischenspeicher gelöscht werden.</div>
 
-  <hr style="border-color:#222; margin:18px 0;" />
+  <hr />
   <div id="links"></div>
 </div>
 
@@ -114,11 +189,13 @@ function render() {
   linksData.forEach((l, i) => {
     const row = document.createElement("div");
     row.className = "link";
+
     const a = document.createElement("a");
     a.href = l.url;
     a.target = "_blank";
     a.rel = "noopener noreferrer";
-    a.innerHTML = l.title;
+    a.textContent = l.title;
+    a.title = l.url;
     row.appendChild(a);
 
     if (role === "owner") {
@@ -150,19 +227,16 @@ function save() {
 
 // Init
 async function init() {
-  // Wenn URL "data" Parameter hat: versuche Import (sicherer: benutzt encodeURIComponent/base64)
   try {
     const params = new URLSearchParams(window.location.search);
     const dataParam = params.get("data");
     if (dataParam) {
-      // try decode safely (URL-encoded base64)
       try {
         const decoded = JSON.parse(decodeURIComponent(atob(dataParam)));
         if (Array.isArray(decoded)) {
           if (confirm("📥 Geteilte Links gefunden. Importieren?")) {
             linksData = decoded;
             save();
-            // URL bereinigen
             window.history.replaceState({}, document.title, window.location.pathname);
             showStatus("✅ Importiert aus URL", 3000);
             return;
@@ -212,8 +286,7 @@ undoBtn.onclick = () => {
   save();
 };
 
-// Export via URL (kopiert base64-url-encoded string)
-// Hinweis: viele Browser/Clients haben Längenlimits; benutz Backup-Datei, wenn URL zu lang ist.
+// Export via URL
 document.getElementById("exportBtn").onclick = () => {
   try {
     const base64 = btoa(JSON.stringify(linksData));
@@ -260,7 +333,6 @@ fileInput.addEventListener("change", (ev) => {
     }
   };
   reader.readAsText(f);
-  // clear input so same file can be chosen again
   ev.target.value = "";
 });
 
