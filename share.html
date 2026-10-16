@@ -1,0 +1,300 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>🔗 Teilen-Link erstellen</title>
+<style>
+:root {
+  --bg: #0f0f0f; --bg-card: #141414; --bg-input: #222; --bg-hover: #1a1a1a;
+  --border: #1f1f1f; --border-input: #333;
+  --text: #fff; --text-muted: #bbb; --text-dim: #666;
+  --accent: #8b5cf6; --success: #22c55e; --danger: #ef4444;
+}
+* { box-sizing: border-box; }
+html, body {
+  margin: 0; padding: 0; min-height: 100vh;
+  font-family: 'Segoe UI', Roboto, sans-serif;
+  background: var(--bg); color: var(--text);
+}
+.app { max-width: 800px; margin: 0 auto; padding: 20px; }
+h2 { text-align: center; font-size: 22px; margin-bottom: 8px; }
+.subtitle { text-align: center; color: var(--text-muted); font-size: 13px; margin-bottom: 25px; }
+
+.card {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  padding: 20px;
+  margin-bottom: 16px;
+}
+.card h3 { margin: 0 0 12px; font-size: 16px; color: var(--accent); }
+
+.stats {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+  gap: 10px;
+  margin-bottom: 16px;
+}
+.stat {
+  background: var(--bg-hover);
+  padding: 12px;
+  border-radius: 10px;
+  text-align: center;
+}
+.stat .num { font-size: 22px; font-weight: 700; color: var(--accent); }
+.stat .label { font-size: 11px; color: var(--text-dim); text-transform: uppercase; letter-spacing: 0.5px; margin-top: 4px; }
+
+.shareUrl {
+  width: 100%;
+  background: var(--bg-input);
+  color: var(--text);
+  border: 1px solid var(--border-input);
+  border-radius: 10px;
+  padding: 12px;
+  font-family: 'Consolas', 'Monaco', monospace;
+  font-size: 13px;
+  resize: vertical;
+  min-height: 80px;
+  word-break: break-all;
+}
+
+button {
+  width: 100%;
+  padding: 14px;
+  border-radius: 10px;
+  border: none;
+  font-size: 15px;
+  font-weight: 700;
+  cursor: pointer;
+  font-family: inherit;
+  color: #fff;
+  margin-top: 8px;
+  transition: transform 0.1s, opacity 0.15s;
+}
+button:hover { opacity: 0.9; }
+button:active { transform: scale(0.98); }
+
+.btnPrimary { background: var(--success); }
+.btnSecondary { background: var(--accent); }
+.btnDanger { background: var(--danger); }
+
+.row { display: flex; gap: 8px; }
+.row button { flex: 1; }
+
+.sizeInfo {
+  display: flex;
+  justify-content: space-between;
+  padding: 10px 0;
+  font-size: 13px;
+  color: var(--text-muted);
+  border-bottom: 1px solid var(--border);
+  margin-bottom: 10px;
+}
+.sizeInfo strong { color: var(--text); }
+
+.good { color: var(--success) !important; }
+.warn { color: #f59e0b !important; }
+.bad { color: var(--danger) !important; }
+
+.note {
+  background: rgba(139, 92, 246, 0.1);
+  border-left: 3px solid var(--accent);
+  padding: 12px 14px;
+  border-radius: 8px;
+  font-size: 13px;
+  color: var(--text-muted);
+  line-height: 1.5;
+  margin-top: 12px;
+}
+
+.successMsg {
+  background: rgba(34, 197, 94, 0.15);
+  border: 1px solid var(--success);
+  color: #86efac;
+  padding: 12px;
+  border-radius: 10px;
+  text-align: center;
+  font-weight: 600;
+  margin-top: 12px;
+  display: none;
+}
+
+@media (max-width: 480px) {
+  .app { padding: 12px; }
+  .stats { grid-template-columns: repeat(2, 1fr); }
+}
+</style>
+</head>
+<body>
+<div class="app">
+  <h2>🔗 Teilen-Link erstellen</h2>
+  <div class="subtitle">Links werden komprimiert (LZ-String) → bis zu 80% kürzer</div>
+
+  <div class="card">
+    <h3>📊 Deine Daten</h3>
+    <div class="stats">
+      <div class="stat">
+        <div class="num" id="statLinks">0</div>
+        <div class="label">Links</div>
+      </div>
+      <div class="stat">
+        <div class="num" id="statCats">0</div>
+        <div class="label">Kategorien</div>
+      </div>
+      <div class="stat">
+        <div class="num" id="statOrig">0</div>
+        <div class="label">Original (Bytes)</div>
+      </div>
+      <div class="stat">
+        <div class="num" id="statComp">0</div>
+        <div class="label">Komprimiert</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <h3>🔗 Dein Teilen-Link</h3>
+    <textarea id="shareUrl" class="shareUrl" readonly placeholder="Wird generiert..."></textarea>
+    <div class="sizeInfo">
+      <span>Länge: <strong id="urlLen">0</strong> Zeichen</span>
+      <span id="urlStatus" class="good">✓ Perfekt</span>
+    </div>
+    <div class="row">
+      <button class="btnPrimary" id="copyBtn">📋 Kopieren</button>
+      <button class="btnSecondary" id="openBtn">🚀 Testen</button>
+    </div>
+    <button class="btnDanger" id="resetBtn" style="margin-top:8px;">🔄 Daten aktualisieren</button>
+    <div class="successMsg" id="successMsg">✅ Link in Zwischenablage kopiert!</div>
+
+    <div class="note">
+      <strong>💡 Tipp:</strong> Speichere diesen Link als <strong>Lesezeichen</strong> – dann hast du deine Links immer sicher, selbst wenn Cache oder Speicher gelöscht werden.
+    </div>
+  </div>
+
+  <div class="card">
+    <h3>ℹ️ Wie es funktioniert</h3>
+    <div style="font-size: 13px; color: var(--text-muted); line-height: 1.6;">
+      1. Du erstellst hier einen Link mit allen deinen Links<br>
+      2. Der Link wird mit <strong>LZ-String</strong> komprimiert (spart ~70-80%)<br>
+      3. Der Link enthält die Daten direkt in der URL (kein Server nötig!)<br>
+      4. Du kannst ihn per WhatsApp, E-Mail, etc. teilen<br>
+      5. Empfänger öffnet den Link → alle Links erscheinen automatisch<br>
+      6. <strong>Sicherer als JSON-Backup</strong>, weil keine Datei verloren gehen kann
+    </div>
+  </div>
+</div>
+
+<!-- LZ-String Library -->
+<script src="https://cdn.jsdelivr.net/npm/lz-string@1.5.0/libs/lz-string.min.js"></script>
+
+<script>
+const els = {
+  statLinks: document.getElementById("statLinks"),
+  statCats: document.getElementById("statCats"),
+  statOrig: document.getElementById("statOrig"),
+  statComp: document.getElementById("statComp"),
+  shareUrl: document.getElementById("shareUrl"),
+  urlLen: document.getElementById("urlLen"),
+  urlStatus: document.getElementById("urlStatus"),
+  copyBtn: document.getElementById("copyBtn"),
+  openBtn: document.getElementById("openBtn"),
+  resetBtn: document.getElementById("resetBtn"),
+  successMsg: document.getElementById("successMsg")
+};
+
+let currentShareUrl = "";
+
+function generateShareUrl() {
+  // Daten aus sessionStorage (von index.html)
+  let data = null;
+  try {
+    const raw = sessionStorage.getItem("shareData");
+    if (raw) data = JSON.parse(raw);
+  } catch(e) {}
+
+  // Fallback: localStorage
+  if (!data) {
+    try {
+      const raw = localStorage.getItem("linksData_v5");
+      if (raw) {
+        const links = JSON.parse(raw);
+        const catsRaw = localStorage.getItem("linksCategories_v1");
+        const categories = catsRaw ? JSON.parse(catsRaw) : [];
+        data = { links, categories };
+      }
+    } catch(e) {}
+  }
+
+  if (!data || !Array.isArray(data.links) || data.links.length === 0) {
+    els.shareUrl.value = "❌ Keine Daten gefunden. Bitte erst auf index.html Links anlegen.";
+    els.shareUrl.style.color = "#ef4444";
+    els.urlStatus.textContent = "Keine Daten";
+    els.urlStatus.className = "bad";
+    return;
+  }
+
+  // Komprimieren
+  const json = JSON.stringify(data);
+  const compressed = LZString.compressToEncodedURIComponent(json);
+
+  // Basis-URL ermitteln (index.html)
+  const base = window.location.href.replace(/share\.html.*$/, "index.html");
+  const shareUrl = base + "?d=" + compressed;
+
+  currentShareUrl = shareUrl;
+  els.shareUrl.value = shareUrl;
+
+  // Statistiken
+  els.statLinks.textContent = data.links.length;
+  els.statCats.textContent = Array.isArray(data.categories) ? data.categories.length : 0;
+  els.statOrig.textContent = json.length;
+  els.statComp.textContent = compressed.length;
+
+  const ratio = json.length > 0 ? Math.round((1 - compressed.length / json.length) * 100) : 0;
+  els.statComp.title = `Ersparnis: ${ratio}%`;
+
+  // URL-Länge
+  els.urlLen.textContent = shareUrl.length;
+  if (shareUrl.length < 2000) {
+    els.urlStatus.textContent = `✓ Perfekt (−${ratio}%)`;
+    els.urlStatus.className = "good";
+  } else if (shareUrl.length < 8000) {
+    els.urlStatus.textContent = `⚠️ Lang (−${ratio}%)`;
+    els.urlStatus.className = "warn";
+  } else {
+    els.urlStatus.textContent = `⚠️ Sehr lang (−${ratio}%)`;
+    els.urlStatus.className = "bad";
+  }
+}
+
+els.copyBtn.onclick = async () => {
+  if (!currentShareUrl) return;
+  try {
+    await navigator.clipboard.writeText(currentShareUrl);
+    els.successMsg.style.display = "block";
+    setTimeout(() => els.successMsg.style.display = "none", 2500);
+  } catch(e) {
+    els.shareUrl.select();
+    document.execCommand("copy");
+    els.successMsg.style.display = "block";
+    setTimeout(() => els.successMsg.style.display = "none", 2500);
+  }
+};
+
+els.openBtn.onclick = () => {
+  if (!currentShareUrl) return;
+  window.open(currentShareUrl, "_blank");
+};
+
+els.resetBtn.onclick = () => {
+  generateShareUrl();
+};
+
+// Beim Laden generieren
+document.addEventListener("DOMContentLoaded", () => {
+  generateShareUrl();
+});
+</script>
+</body>
+</html>
